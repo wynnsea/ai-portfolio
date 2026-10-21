@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
+/* Palet warna dari referensi desain */
+@theme {
+  --color-primary: #222222;
+  --color-secondary: #7b7b7b;
+  --color-tertiary: #f8f8f8;
+  --color-white: #ffffff;
+  --color-line: #e6e6e6;
+
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  /* Aksen Jepang: font Mincho bawaan sistem (tanpa unduhan tambahan) */
+  --font-jp: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  background: var(--color-white);
+  /* Sembunyikan scrollbar (scroll tetap berfungsi) */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+::-webkit-scrollbar {
+  display: none;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-white);
+  color: var(--color-primary);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* Kunci scroll selama intro berjalan (diset oleh inline script sebelum paint) */
+html[data-intro="playing"] {
+  overflow: hidden;
+}
+
+/* Kunjungan berikutnya dalam sesi yang sama: sembunyikan preloader sejak paint pertama */
+html[data-intro="skip"] [data-preloader] {
+  display: none;
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Teks outline untuk huruf dekoratif besar di background */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-line);
 }
