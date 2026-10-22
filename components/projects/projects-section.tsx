@@ -2,6 +2,7 @@ import { projects } from "@/lib/projects";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCard, type CardLayout } from "@/components/projects/project-card";
+import { Wave } from "@/components/wave";
 
 // Susunan "berantakan" yang disengaja: lebar, posisi, rasio, kemiringan, dan kecepatan parallax berbeda.
 const layouts: CardLayout[] = [
@@ -16,6 +17,7 @@ const layouts: CardLayout[] = [
 export function ProjectsSection() {
   return (
     <section id="projects" className="relative overflow-hidden bg-white py-28 md:py-40">
+      <Wave from="tertiary" />
       {/* Kanji 作品 ("karya") di latar belakang, bergerak lebih lambat */}
       <Parallax
         offset={260}
@@ -33,7 +35,7 @@ export function ProjectsSection() {
             Projects<sup className="ml-2 align-top tracking-normal text-lg font-normal text-secondary md:text-2xl">({String(projects.length).padStart(2, "0")})</sup>
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            Kumpulan integrasi AI dan produk web. LLM, API, dan data yang aku rakit jadi tools, banyak yang terinspirasi dari kecintaanku sama Jepang. Klik card-nya buat lihat cerita lengkapnya.
+            Kumpulan integrasi AI dan produk web. LLM, API, dan data yang saya rakit jadi tools, banyak yang terinspirasi dari kecintaan saya sama Jepang. Klik card-nya buat lihat cerita lengkapnya.
           </p>
         </Reveal>
 

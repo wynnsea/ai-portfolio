@@ -1,6 +1,7 @@
 import { about } from "@/lib/site";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
+import { Wave } from "@/components/wave";
 
 // Offset parallax berbeda untuk tiap kartu minat agar susunannya terasa hidup
 const interestOffsets = [40, -50, 70, -30];
@@ -8,6 +9,7 @@ const interestOffsets = [40, -50, 70, -30];
 export function AboutSection() {
   return (
     <section id="about" className="relative overflow-hidden bg-tertiary py-28 md:py-40">
+      <Wave from="white" />
       <Parallax
         offset={200}
         className="text-outline pointer-events-none absolute -right-[6vw] top-[6%] select-none font-jp text-[46vw] leading-none md:text-[34vw]"
@@ -36,7 +38,7 @@ export function AboutSection() {
           </div>
 
           <div className="space-y-10 md:col-span-5 md:pl-6">
-            <Reveal className="bg-white p-6 shadow-[0_20px_50px_-30px_rgba(34,34,34,0.3)] md:p-8">
+            <Reveal className="bg-white p-6 shadow-[0_20px_50px_-30px_rgba(42,86,119,0.3)] md:p-8">
               <p className="text-xs uppercase tracking-[0.25em] text-secondary">Education</p>
               <p className="mt-4 text-2xl font-light tracking-tight">{about.education.school}</p>
               <p className="mt-1 text-sm">{about.education.degree}</p>

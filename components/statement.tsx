@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform, type MotionValue } from "motion/react"
 import { Parallax } from "@/components/motion/parallax";
 
 const text =
-  "Aku nyambungin model AI yang canggih ke produk nyata. API, data, dan tampilan aku racik jadi tools yang beneran dipakai orang.";
+  "Saya tertarik dengan perkembangan teknologi AI, terutama cara mengintegrasikannya ke dalam sistem nyata. Dan ada satu hal yang selalu jadi inspirasi saya: budaya Jepang.";
 
 function Word({ children, progress, range }: { children: string; progress: MotionValue<number>; range: [number, number] }) {
   const opacity = useTransform(progress, range, [0.15, 1]);

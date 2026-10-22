@@ -16,9 +16,22 @@ const interTight = Inter_Tight({
   subsets: ["latin"],
 });
 
+// URL website setelah online, dipakai untuk link absolut gambar preview.
+// Isi NEXT_PUBLIC_SITE_URL di .env (mis. https://wynnsea.vercel.app). Di Vercel, Next.js mengisinya otomatis.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: { default: `${site.brand} | ${site.name}, ${site.role}`, template: `%s | ${site.brand}` },
   description: site.metaDescription,
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: site.brand,
+    title: `${site.brand} | ${site.name}, ${site.role}`,
+    description: site.metaDescription,
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

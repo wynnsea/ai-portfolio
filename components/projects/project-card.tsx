@@ -21,7 +21,7 @@ export function ProjectCard({ project, index, layout }: { project: Project; inde
           href={`/projects/${project.slug}`}
           className={`group block transition-[rotate,translate] duration-700 ease-expo hover:-translate-y-2 hover:rotate-0 ${layout.rotate}`}
         >
-          <div className="relative overflow-hidden shadow-[0_30px_60px_-30px_rgba(34,34,34,0.35)]">
+          <div className="relative overflow-hidden shadow-[0_30px_60px_-30px_rgba(42,86,119,0.35)]">
             <div className="transition-transform duration-[1200ms] ease-expo group-hover:scale-[1.06]">
               <ProjectCover project={project} index={index} className={layout.aspect} sizes="(min-width: 768px) 45vw, 90vw" />
             </div>

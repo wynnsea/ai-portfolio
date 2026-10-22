@@ -7,11 +7,17 @@ export const site = {
   role: "Junior AI Engineer",
   tagline: "junior AI engineer",
   description:
-    "Lulusan Politeknik Takumi yang suka ngulik integrasi AI. Aku nyambungin LLM, API, dan data jadi aplikasi web yang beneran kepake.",
+    "Lulusan Politeknik Takumi yang suka ngulik integrasi AI. Saya nyambungin LLM, API, dan data jadi aplikasi web yang beneran kepake.",
   // Deskripsi netral untuk metadata (judul tab & mesin pencari)
   metaDescription:
     "Portfolio Wayan, junior AI engineer lulusan Politeknik Takumi yang berfokus pada integrasi AI ke aplikasi web.",
   location: "Indonesia",
+  // Status ketersediaan di hero. Set `open: false` untuk menyembunyikan badge.
+  availability: {
+    open: true,
+    label: "Open to work",
+    detail: "Full-time & freelance",
+  },
   email: "wayaandeva123@gmail.com",
   // Ganti dengan foto kamu, misalnya "/images/profile.jpg"
   photo: "/images/wyn.jpg",
@@ -22,19 +28,29 @@ export const site = {
   nav: [
     { label: "About Me", href: "#about" },
     { label: "Projects", href: "#projects" },
+    { label: "Certifications", href: "#certifications" },
+    { label: "Activities", href: "#activities" },
     { label: "Blog", href: "#blog" },
   ],
   socials: [
     { label: "GitHub", href: "https://github.com/wynnsea" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/wayan-deva/" },
   ],
-  greetings: ["Halo", "Hello", "こんにちは", "Hola", "Bonjour", "ようこそ", "Selamat Datang"],
+  greetings: [
+    "Halo",
+    "Hello",
+    "こんにちは",
+    "Hola",
+    "Bonjour",
+    "ようこそ",
+    "Selamat Datang",
+  ],
 } as const;
 
 export const about = {
   story: [
-    "Haii, aku Wayan! Junior AI engineer lulusan D3 Teknologi Informasi Politeknik Takumi. Aku bukan tipe yang bikin model AI dari nol. Yang aku suka itu integrasinya: ambil model yang udah keren, terus dirakit jadi produk yang beneran nyelesain masalah.",
-    "Sehari-hari aku main di area pertemuan AI dan software. Nyambungin API LLM, bikin pipeline RAG, ngatur prompt biar output-nya rapi dan konsisten, terus dibungkus jadi web yang cepet dan enak dipakai. Sebelum masuk dunia AI, aku sempet jadi IT Coordinator, dan dari situ aku belajar satu hal penting: sistem sebagus apa pun gak ada artinya kalau penggunanya bingung. Di luar ngoding, aku suka banget sama budaya Jepang, dan prinsip 改善 (kaizen) jadi pegangan aku buat terus improve sedikit demi sedikit.",
+    "Haii, saya Wayan! Junior AI engineer lulusan D3 Teknologi Informasi Politeknik Takumi. Saya bukan tipe yang bikin model AI dari nol. Yang saya suka itu integrasinya: ambil model yang udah keren, terus dirakit jadi produk yang beneran nyelesain masalah.",
+    "Sehari-hari saya main di area pertemuan AI dan software. Nyambungin API LLM, bikin pipeline RAG, ngatur prompt biar output-nya rapi dan konsisten, terus dibungkus jadi web yang cepet dan enak dipakai. Sebelum masuk dunia AI, saya sempet jadi IT Coordinator, dan dari situ saya belajar satu hal penting: sistem sebagus apa pun gak ada artinya kalau penggunanya bingung. Di luar ngoding, saya suka banget sama budaya Jepang, dan prinsip 改善 (kaizen) jadi pegangan saya buat terus improve sedikit demi sedikit.",
   ],
   education: {
     school: "Politeknik Takumi",

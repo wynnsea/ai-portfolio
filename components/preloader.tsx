@@ -41,10 +41,11 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
       data-preloader
       role="status"
       aria-label="Memuat"
-      className="fixed inset-0 z-[100] flex flex-col bg-primary px-6 py-6 text-white md:px-10 md:py-8"
-      exit={{ y: "-100%", transition: { duration: 0.9, ease: [0.76, 0, 0.24, 1], delay: 0.15 } }}
+      className="wave-curtain fixed inset-x-0 top-0 z-[100] h-[calc(100svh+6rem)] bg-primary text-white"
+      exit={{ y: "-100%", transition: { duration: 1, ease: [0.76, 0, 0.24, 1], delay: 0.15 } }}
     >
-      <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-secondary">
+      <div className="flex h-svh flex-col px-6 py-6 md:px-10 md:py-8">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
         <span className="font-semibold tracking-[0.3em] text-white">{site.brand}</span>
         <span>{site.role}</span>
       </div>
@@ -59,16 +60,17 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
             isLast ? "text-5xl md:text-7xl" : "text-4xl md:text-6xl"
           }`}
         >
-          <span className="size-2.5 rounded-full bg-white md:size-3" />
+          <span className="size-2.5 rounded-full bg-accent md:size-3" />
           {greetings[index]}
         </motion.p>
       </div>
 
       <div className="flex items-end justify-between">
         <div className="h-px w-1/2 overflow-hidden bg-white/15 md:w-1/3">
-          <motion.div className="h-full origin-left bg-white" style={{ scaleX: bar }} />
+          <motion.div className="h-full origin-left bg-accent" style={{ scaleX: bar }} />
         </div>
         <motion.span className="text-6xl font-extralight tabular-nums leading-none md:text-8xl">{counter}</motion.span>
+      </div>
       </div>
     </motion.div>
   );

@@ -7,6 +7,7 @@ import type { JobMatchResult } from "@/lib/ai/types";
 import { SAMPLE_JOB } from "@/lib/ai/samples";
 import { Reveal } from "@/components/motion/reveal";
 import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
+import { Wave } from "@/components/wave";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -31,6 +32,7 @@ function ScoreRing({ score }: { score: number }) {
           stroke="currentColor"
           strokeWidth="6"
           strokeLinecap="round"
+          className="text-accent"
           strokeDasharray={c}
           initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c * (1 - score / 100) }}
@@ -80,16 +82,17 @@ export function JobMatchSection() {
 
   return (
     <section id="job-match" className="relative overflow-hidden bg-white py-28 md:py-40">
+      <Wave from="tertiary" />
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
           <p className="mb-6 flex items-center gap-4 text-xs uppercase tracking-[0.25em] text-secondary">
-            05 / For Recruiters <DemoBadge />
+            07 / For Recruiters <DemoBadge />
           </p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">Job Match</h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            Lagi buka lowongan? Tempel deskripsinya di sini, nanti SEA AI cek seberapa cocok aku sama posisinya, lengkap sama project yang relevan.
+            Lagi buka lowongan? Tempel deskripsinya di sini, nanti SEA AI cek seberapa cocok saya sama posisinya, lengkap sama project yang relevan.
           </p>
         </Reveal>
 

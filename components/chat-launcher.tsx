@@ -14,13 +14,14 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const suggestions = [
   "Wayan udah bikin project apa aja?",
   "Skill Wayan apa aja?",
+  "Punya sertifikat apa aja?",
   "Ceritain soal Nihongo Buddy",
-  "Aku recruiter, cocok gak?",
+  "Saya recruiter, cocok gak?",
 ];
 
 type Message = { id: number; role: "user" | "assistant"; text: string; action?: SeaAction };
 
-const greetingText = `こんにちは! Aku SEA AI, asisten pribadinya ${site.name}. Mau tau soal project, skill, pengalaman, atau cara ngontak dia? Tanya aja!`;
+const greetingText = `こんにちは! Saya SEA AI, asisten pribadinya ${site.name}. Mau tau soal project, skill, pengalaman, atau cara ngontak dia? Tanya aja!`;
 
 const greeting: Message = { id: 0, role: "assistant", text: "" };
 
@@ -94,7 +95,7 @@ export function ChatLauncher() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-60 flex flex-col items-end gap-3 md:bottom-8 md:right-8">
+    <div data-chat-launcher className="fixed bottom-5 right-5 z-60 flex flex-col items-end gap-3 md:bottom-8 md:right-8">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -106,7 +107,7 @@ export function ChatLauncher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.4, ease }}
-            className="flex h-[min(560px,calc(100svh-7.5rem))] w-[min(380px,calc(100vw-2.5rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(34,34,34,0.35)]"
+            className="flex h-[min(560px,calc(100svh-7.5rem))] w-[min(380px,calc(100vw-2.5rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(42,86,119,0.35)]"
           >
             <div className="flex items-center justify-between bg-primary px-5 py-4 text-white">
               <div className="flex items-center gap-3">
@@ -114,7 +115,7 @@ export function ChatLauncher() {
                 <div>
                   <p className="text-sm font-medium">SEA AI</p>
                   <p className="flex items-center gap-1.5 text-xs text-white/50">
-                    <span className="size-1.5 rounded-full bg-emerald-400" /> Online · versi demo
+                    <span className="size-1.5 rounded-full bg-accent" /> Online · versi demo
                   </p>
                 </div>
               </div>
@@ -208,11 +209,11 @@ export function ChatLauncher() {
         transition={{ duration: 0.8, ease, delay: 1.2 }}
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.96 }}
-        className="group flex h-14 items-center gap-3 rounded-full bg-primary pl-2 pr-5 text-white ring-1 ring-white/15 shadow-[0_20px_40px_-15px_rgba(34,34,34,0.6)]"
+        className="group flex h-14 items-center gap-3 rounded-full bg-primary pl-2 pr-5 text-white ring-1 ring-white/15 shadow-[0_20px_40px_-15px_rgba(42,86,119,0.6)]"
       >
         <span className="relative grid size-10 place-items-center rounded-full bg-white font-jp text-lg text-primary">
           {open ? "✕" : "海"}
-          {!open && <span className="absolute inset-0 animate-ping rounded-full bg-white/40 [animation-duration:2.5s]" />}
+          {!open && <span className="absolute inset-0 animate-ping rounded-full bg-accent/60 [animation-duration:2.5s]" />}
         </span>
         <span className="text-sm font-medium tracking-wide">SEA AI</span>
       </motion.button>

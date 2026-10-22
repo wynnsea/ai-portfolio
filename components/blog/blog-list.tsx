@@ -79,7 +79,7 @@ export function BlogList({ posts, startIndex = 0 }: { posts: Post[]; startIndex?
               animate={{ opacity: 1, scale: 1, rotate: -3 }}
               exit={{ opacity: 0, scale: 0.6, rotate: -6 }}
               transition={{ duration: 0.4, ease }}
-              className="-translate-x-1/2 -translate-y-1/2 overflow-hidden shadow-[0_30px_60px_-20px_rgba(34,34,34,0.45)]"
+              className="-translate-x-1/2 -translate-y-1/2 overflow-hidden shadow-[0_30px_60px_-20px_rgba(42,86,119,0.45)]"
             >
               <ProjectCover project={posts[active]} index={startIndex + active} className="aspect-[4/3] w-72" sizes="288px" />
             </motion.div>

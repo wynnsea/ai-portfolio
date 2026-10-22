@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# file pribadi (sertifikat asli dengan tanggal lahir), jangan di-commit
+/private

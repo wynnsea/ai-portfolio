@@ -133,7 +133,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-[0_40px_100px_-20px_rgba(34,34,34,0.5)]"
+            className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-[0_40px_100px_-20px_rgba(42,86,119,0.5)]"
           >
             <div className="flex items-center gap-3 border-b border-line px-5">
               <span aria-hidden className="text-secondary">⌕</span>

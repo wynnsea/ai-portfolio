@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
-/* Palet warna dari referensi desain */
+/* Palet nuansa laut (SEA di WYNNSEA) */
 @theme {
-  --color-primary: #222222;
-  --color-secondary: #7b7b7b;
-  --color-tertiary: #f8f8f8;
+  --color-primary: #2a5677; /* biru laut lembut: teks utama & section biru */
+  --color-secondary: #4d7087; /* abu kebiruan: teks pendukung */
+  --color-tertiary: #eaf4fa; /* buih laut: background lembut */
+  --color-accent: #a7d8f2; /* biru soft cerah: aksen & highlight (bukan untuk teks di atas putih) */
   --color-white: #ffffff;
-  --color-line: #e6e6e6;
+  --color-line: #d6e8f2;
 
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
   /* Aksen Jepang: font Mincho bawaan sistem (tanpa unduhan tambahan) */
@@ -39,6 +40,40 @@ body {
 ::selection {
   background: var(--color-primary);
   color: var(--color-white);
+}
+
+/* Ombak: geser setengah lebar (= satu periode penuh) supaya loop menyambung mulus */
+@keyframes wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-wave {
+  animation: wave-drift 20s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave {
+    animation: none;
+  }
+}
+
+/* Tirai loading: bagian atas penuh, 6rem terbawah berbentuk ombak (mask, bukan elemen terpisah,
+   supaya tidak salah dirender saat tirai sedang dianimasikan) */
+.wave-curtain {
+  --wave-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L0 50.0 L16 51.9 L32 53.9 L48 55.7 L64 57.4 L80 59.0 L96 60.4 L112 61.6 L128 62.6 L144 63.3 L160 63.8 L176 64.0 L192 63.9 L208 63.6 L224 63.0 L240 62.1 L256 61.0 L272 59.7 L288 58.2 L304 56.6 L320 54.8 L336 52.9 L352 51.0 L368 49.0 L384 47.1 L400 45.2 L416 43.4 L432 41.8 L448 40.3 L464 39.0 L480 37.9 L496 37.0 L512 36.4 L528 36.1 L544 36.0 L560 36.2 L576 36.7 L592 37.4 L608 38.4 L624 39.6 L640 41.0 L656 42.6 L672 44.3 L688 46.1 L704 48.1 L720 50.0 L736 51.9 L752 53.9 L768 55.7 L784 57.4 L800 59.0 L816 60.4 L832 61.6 L848 62.6 L864 63.3 L880 63.8 L896 64.0 L912 63.9 L928 63.6 L944 63.0 L960 62.1 L976 61.0 L992 59.7 L1008 58.2 L1024 56.6 L1040 54.8 L1056 52.9 L1072 51.0 L1088 49.0 L1104 47.1 L1120 45.2 L1136 43.4 L1152 41.8 L1168 40.3 L1184 39.0 L1200 37.9 L1216 37.0 L1232 36.4 L1248 36.1 L1264 36.0 L1280 36.2 L1296 36.7 L1312 37.4 L1328 38.4 L1344 39.6 L1360 41.0 L1376 42.6 L1392 44.3 L1408 46.1 L1424 48.1 L1440 50.0 L1440 0 Z'/%3E%3C/svg%3E");
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6rem + 1px) no-repeat, var(--wave-mask) bottom / 1440px 6rem repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6rem + 1px) no-repeat, var(--wave-mask) bottom / 1440px 6rem repeat-x;
+}
+
+/* Sembunyikan tombol SEA AI saat menu mobile terbuka supaya tidak menimpa isi menu */
+html[data-menu="open"] [data-chat-launcher] {
+  display: none;
 }
 
 /* Kunci scroll selama intro berjalan (diset oleh inline script sebelum paint) */

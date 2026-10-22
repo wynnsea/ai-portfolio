@@ -89,6 +89,23 @@ export function Hero() {
           style={{ y: textY, opacity: textOpacity }}
           className="order-1 flex flex-col justify-center lg:order-2 lg:pb-16"
         >
+          {/* {site.availability.open && (
+            <motion.p
+              variants={fadeUp}
+              custom={0.5}
+              initial="hidden"
+              animate={state}
+              className="mb-8 inline-flex w-fit items-center gap-2.5 rounded-full border border-line bg-tertiary px-4 py-1.5 text-xs"
+            >
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary" />
+              </span>
+              <span className="font-medium">{site.availability.label}</span>
+              <span className="text-secondary">· {site.availability.detail}</span>
+            </motion.p>
+          )} */}
+
           <motion.div variants={fadeUp} custom={0.6} initial="hidden" animate={state} className="mb-8 flex gap-10 lg:mb-10">
             {site.stats.map((s) => (
               <div key={s.value}>
@@ -110,7 +127,7 @@ export function Hero() {
           </h1>
 
           <motion.p variants={fadeUp} custom={0.8} initial="hidden" animate={state} className="mt-4 text-base md:text-lg">
-            Aku <span className="font-medium">{site.name}</span>, {site.tagline}
+            Saya <span className="font-medium">{site.name}</span>, {site.tagline}
           </motion.p>
 
           <motion.p

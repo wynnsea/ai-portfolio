@@ -5,12 +5,14 @@ import { ParallaxMedia } from "@/components/motion/parallax-media";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCover } from "@/components/projects/project-cover";
 import { BlogList } from "@/components/blog/blog-list";
+import { Wave } from "@/components/wave";
 
 export function BlogSection() {
   const [featured, ...rest] = sortedPosts;
 
   return (
     <section id="blog" className="relative overflow-hidden bg-tertiary py-28 md:py-40">
+      <Wave from="white" />
       {/* Kanji 書 ("menulis") di latar belakang */}
       <Parallax
         offset={220}
@@ -21,7 +23,7 @@ export function BlogSection() {
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">04 / Writing</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">06 / Writing</p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">

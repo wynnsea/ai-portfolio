@@ -4,6 +4,8 @@
 import { about, site } from "@/lib/site";
 import { getProject, projects } from "@/lib/projects";
 import { getPost, sortedPosts } from "@/lib/posts";
+import { certifications } from "@/lib/certifications";
+import { activities } from "@/lib/activities";
 import type { ExplainLevel, JobMatchResult, SeaReply } from "@/lib/ai/types";
 
 /** Jeda buatan supaya terasa seperti menunggu respons model. */
@@ -11,8 +13,8 @@ export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const has = (text: string, words: string[]) => words.some((w) => text.includes(w));
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-/** Data project ditulis dengan "aku"; SEA AI membicarakan Wayan sebagai orang ketiga. */
-const thirdPerson = (s: string) => s.replace(/\baku\b/gi, site.name);
+/** Data project ditulis dengan "saya"; SEA AI membicarakan Wayan sebagai orang ketiga. */
+const thirdPerson = (s: string) => s.replace(/\bsaya\b/gi, site.name);
 
 // ---------------------------------------------------------------------------
 // SEA AI chat
@@ -32,7 +34,7 @@ export function mockSeaReply(message: string): SeaReply {
 
   if (has(q, ["lowongan", "recruit", "hire", "hiring", "cocok", "job", "loker", "rekrut", "kandidat"])) {
     return {
-      reply: `Kamu lagi nyari kandidat? Coba fitur Job Match: tempel deskripsi lowongannya, nanti aku cek seberapa cocok ${name} sama posisinya, lengkap sama project yang relevan.`,
+      reply: `Kamu lagi nyari kandidat? Coba fitur Job Match: tempel deskripsi lowongannya, nanti saya cek seberapa cocok ${name} sama posisinya, lengkap sama project yang relevan.`,
       action: { type: "navigate", href: "/#job-match", label: "Coba Job Match" },
     };
   }
@@ -40,8 +42,24 @@ export function mockSeaReply(message: string): SeaReply {
   if (has(q, ["project", "proyek", "portfolio", "portofolio", "karya", "bikin apa"])) {
     const list = projects.map((p) => p.title).join(", ");
     return {
-      reply: `${name} udah ngerjain ${projects.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau aku tunjukin yang mana?`,
+      reply: `${name} udah ngerjain ${projects.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
       action: { type: "navigate", href: "/#projects", label: "Lihat semua project" },
+    };
+  }
+
+  if (has(q, ["kegiatan", "organisasi", "fasilitator", "panitia", "volunteer", "relawan", "pemateri", "lomba", "aktivitas", "activit"])) {
+    const roles = [...new Set(activities.map((a) => a.role.toLowerCase()))].slice(0, 4).join(", ");
+    return {
+      reply: `Di luar kerjaan, ${name} aktif di ${activities.length} kegiatan, misalnya jadi ${roles}. Salah satunya ${activities[0].title} sebagai ${activities[0].role.toLowerCase()}.`,
+      action: { type: "navigate", href: "/#activities", label: "Lihat kegiatan" },
+    };
+  }
+
+  if (has(q, ["sertifikat", "sertifikasi", "certif", "toefl", "itep", "jlpt", "bahasa inggris", "english"])) {
+    const list = certifications.map((c) => c.title).join(", ");
+    return {
+      reply: `${name} punya ${certifications.length} sertifikasi: ${list}. Ada sertifikat bahasa Inggris (TOEFL & iTEP), bahasa Jepang (JLPT N4), dan kompetensi Junior Web Developer.`,
+      action: { type: "navigate", href: "/#certifications", label: "Lihat sertifikasi" },
     };
   }
 
@@ -92,11 +110,11 @@ export function mockSeaReply(message: string): SeaReply {
   }
 
   if (has(q, ["halo", "hai", "hi", "hello", "pagi", "siang", "malam", "konnichiwa"])) {
-    return { reply: `Haii! Aku SEA AI, asistennya ${name}. Kamu bisa tanya soal project, skill, pengalaman, atau cara ngontak dia.` };
+    return { reply: `Haii! Saya SEA AI, asistennya ${name}. Kamu bisa tanya soal project, skill, pengalaman, atau cara ngontak dia.` };
   }
 
   return {
-    reply: `Hmm, aku masih versi demo jadi belum ngerti semua pertanyaan. Coba tanya soal project, skill, pengalaman kerja, pendidikan, atau kontak ${name} ya!`,
+    reply: `Hmm, saya masih versi demo jadi belum ngerti semua pertanyaan. Coba tanya soal project, skill, pengalaman kerja, pendidikan, atau kontak ${name} ya!`,
   };
 }
 
@@ -122,7 +140,8 @@ const SKILLS: { label: string; patterns: string[]; owned: boolean }[] = [
   { label: "Docker", patterns: ["docker", "container"], owned: true },
   { label: "Git", patterns: ["git\\b", "github", "gitlab"], owned: true },
   { label: "Computer vision", patterns: ["computer vision", "opencv", "vision"], owned: true },
-  { label: "Bahasa Jepang", patterns: ["jepang", "japanese", "jlpt"], owned: true },
+  { label: "Bahasa Jepang (JLPT N4)", patterns: ["jepang", "japanese", "jlpt"], owned: true },
+  { label: "Bahasa Inggris (TOEFL, iTEP)", patterns: ["inggris", "english", "toefl", "ielts"], owned: true },
   { label: "Kubernetes", patterns: ["kubernetes", "k8s"], owned: false },
   { label: "AWS / GCP", patterns: ["aws", "gcp", "google cloud", "azure"], owned: false },
   { label: "Fine-tuning model", patterns: ["fine-?tun", "training model", "pytorch", "tensorflow"], owned: false },
@@ -155,7 +174,7 @@ export function mockJobMatch(jd: string): JobMatchResult {
     .slice(0, 3);
 
   const verdict = score >= 80 ? "Cocok banget" : score >= 60 ? "Cukup cocok" : "Ada beberapa gap";
-  const unsure = found.length < 3 ? " (tapi aku cuma nemu sedikit skill teknis, jadi kurang yakin)" : "";
+  const unsure = found.length < 3 ? " (tapi saya cuma nemu sedikit skill teknis, jadi kurang yakin)" : "";
 
   return {
     score,
@@ -163,7 +182,7 @@ export function mockJobMatch(jd: string): JobMatchResult {
       ? `${verdict}${unsure}! ${site.name} udah punya ${matched.length} dari ${found.length} skill yang disebut di lowongan ini. ${
           missing.length ? `Yang masih perlu dikejar: ${missing.join(", ")}.` : "Gak ada skill yang kelewat."
         } Fokusnya di integrasi AI juga pas buat posisi yang banyak nyambungin LLM ke produk.`
-      : "Aku gak nemu skill teknis spesifik di teks ini. Coba tempel deskripsi lowongan yang lebih lengkap biar analisisnya lebih akurat.",
+      : "Saya gak nemu skill teknis spesifik di teks ini. Coba tempel deskripsi lowongan yang lebih lengkap biar analisisnya lebih akurat.",
     matched,
     missing,
     projects: ranked.map(({ p, hits }) => ({

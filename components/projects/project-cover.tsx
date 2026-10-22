@@ -7,7 +7,7 @@ export type CoverSource = Pick<Project, "title" | "titleJp" | "kanji" | "tone" |
 const tones = {
   dark: { bg: "bg-primary", chip: "bg-primary", kanji: "text-white/90", sub: "text-white/45", line: "rgba(255,255,255,0.06)", ring: "border-white/25" },
   mid: { bg: "bg-secondary", chip: "bg-secondary", kanji: "text-white", sub: "text-white/60", line: "rgba(255,255,255,0.09)", ring: "border-white/35" },
-  light: { bg: "bg-tertiary", chip: "bg-tertiary", kanji: "text-primary", sub: "text-secondary", line: "rgba(34,34,34,0.06)", ring: "border-primary/20" },
+  light: { bg: "bg-tertiary", chip: "bg-tertiary", kanji: "text-primary", sub: "text-secondary", line: "rgba(42,86,119,0.06)", ring: "border-primary/20" },
 } as const;
 
 // Posisi kanji berbeda-beda agar tiap cover terasa unik

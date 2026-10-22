@@ -32,11 +32,14 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   const done = seen || finished;
   const lenis = useLenis();
 
-  const finish = useCallback(() => {
+  const finish = useCallback(() => setFinished(true), []);
+
+  // Tandai "sudah dilihat" SETELAH animasi keluar selesai. Kalau ditandai lebih awal,
+  // `seen` langsung jadi true dan preloader dilepas sebelum tirainya sempat terangkat.
+  const markSeen = useCallback(() => {
     try {
       sessionStorage.setItem(INTRO_STORAGE_KEY, "1");
     } catch {}
-    setFinished(true);
   }, []);
 
   useEffect(() => {
@@ -52,7 +55,9 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   return (
     <IntroContext.Provider value={{ done }}>
       {/* Jika intro sudah pernah dilihat, preloader dilepas tanpa animasi keluar */}
-      {!seen && <AnimatePresence>{!finished && <Preloader key="preloader" onComplete={finish} />}</AnimatePresence>}
+      {!seen && (
+        <AnimatePresence onExitComplete={markSeen}>{!finished && <Preloader key="preloader" onComplete={finish} />}</AnimatePresence>
+      )}
       {children}
     </IntroContext.Provider>
   );
