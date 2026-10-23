@@ -24,7 +24,11 @@ export function mockSeaReply(message: string): SeaReply {
   const q = message.toLowerCase();
   const name = site.name;
 
-  const project = projects.find((p) => q.includes(p.title.toLowerCase()) || q.includes(p.slug.replace("-", " ")));
+  // Cocok kalau pertanyaan menyebut judul lengkap, slug, atau kata pertama judul (mis. "minori")
+  const project = projects.find((p) => {
+    const first = p.title.split(" ")[0].toLowerCase();
+    return q.includes(p.title.toLowerCase()) || q.includes(p.slug.replaceAll("-", " ")) || (first.length > 3 && q.includes(first));
+  });
   if (project) {
     return {
       reply: `${project.title} itu ${thirdPerson(lowerFirst(project.summary))} Di project ini ${name} jadi ${project.role} selama ${project.duration}, pakai ${project.stack.slice(0, 3).join(", ")}, dan lain-lain.`,
@@ -89,20 +93,23 @@ export function mockSeaReply(message: string): SeaReply {
   if (has(q, ["kuliah", "pendidikan", "takumi", "lulus", "kampus", "education"])) {
     const e = about.education;
     return {
-      reply: `${name} lulusan ${e.degree} di ${e.school} (${e.period}). Tugas akhirnya bikin sistem absensi pakai face recognition.`,
-      action: { type: "navigate", href: "/projects/face-attendance", label: "Lihat tugas akhirnya" },
+      reply: `${name} lulusan ${e.degree} di ${e.school} (${e.period}). Selama kuliah dia juga ikut program industri seperti Nusantara Data Center Academy dan Learning Factory PT Minori.`,
+      action: { type: "navigate", href: "/#about", label: "Lihat pendidikan" },
     };
   }
 
   if (has(q, ["jepang", "japan", "nihongo", "anime", "jlpt", "kanji"])) {
     return {
-      reply: `Yap, ${name} suka banget sama budaya Jepang! Itu kebawa ke project-nya juga, misalnya Nihongo Buddy (tutor bahasa Jepang pakai RAG) sama Kanji Lens (baca kanji dari kamera).`,
-      action: { type: "navigate", href: "/projects/nihongo-buddy", label: "Buka Nihongo Buddy" },
+      reply: `Yap, ${name} suka banget sama budaya Jepang! Dia udah lulus JLPT N4, pernah jadi fasilitator di Bunkasai, dan bikin Minori AI RCR, sistem rekrutmen berbasis AI untuk PT Minori.`,
+      action: { type: "navigate", href: "/#certifications", label: "Lihat sertifikat JLPT" },
     };
   }
 
   if (has(q, ["blog", "artikel", "tulisan", "nulis"])) {
     const latest = sortedPosts[0];
+    if (!latest) {
+      return { reply: `${name} belum nerbitin artikel nih. Tulisan pertamanya lagi disiapin, ditunggu ya!` };
+    }
     return {
       reply: `Tulisan terbaru ${name} judulnya "${latest.title}". Isinya soal ${lowerFirst(latest.excerpt)}`,
       action: { type: "navigate", href: `/blog/${latest.slug}`, label: "Baca artikelnya" },

@@ -17,7 +17,7 @@ export const skillProfile: Skill[] = [
     label: "Integrasi LLM API",
     level: "solid",
     description: "Memanggil API LLM seperti OpenAI, Claude, Gemini. Termasuk streaming, structured output, dan generative AI di aplikasi.",
-    evidence: ["nihongo-buddy", "kanji-lens"],
+    evidence: ["minori-ai-rcr"],
   },
   {
     id: "kubernetes",

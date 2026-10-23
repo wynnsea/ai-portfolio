@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
@@ -10,12 +11,14 @@ import { useIntro } from "@/components/providers/intro-provider";
 import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+// Dipakai bersama oleh panel chat dan putaran logo, supaya buka/tutup & putaran selalu selaras
+const panelTransition = { duration: 0.4, ease };
 
 const suggestions = [
   "Wayan udah bikin proyek apa aja?",
   "Keahlian Wayan apa aja?",
   "Punya sertifikat apa aja?",
-  "Ceritain soal Nihongo Buddy",
+  "Ceritain soal Minori AI RCR",
   "Saya rekruter, cocok gak?",
 ];
 
@@ -106,12 +109,14 @@ export function ChatLauncher() {
             initial={{ opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ duration: 0.4, ease }}
+            transition={panelTransition}
             className="flex h-[min(560px,calc(100svh-7.5rem))] w-[min(380px,calc(100vw-2.5rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(42,86,119,0.35)]"
           >
             <div className="flex items-center justify-between bg-primary px-5 py-4 text-white">
               <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-full bg-white font-jp text-primary">海</span>
+                <span className="grid size-9 place-items-center rounded-full bg-white p-1">
+                  <Image src="/brand/logo.png" alt="" width={28} height={28} className="size-7 object-contain" />
+                </span>
                 <div>
                   <p className="text-sm font-medium">SEA AI</p>
                   <p className="flex items-center gap-1.5 text-xs text-white/50">
@@ -204,18 +209,25 @@ export function ChatLauncher() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="sea-ai-panel"
+        aria-label={open ? "Tutup chat SEA AI" : "Buka chat SEA AI"}
+        title="SEA AI"
         initial={{ opacity: 0, scale: 0.6, y: 20 }}
         animate={done ? { opacity: 1, scale: 1, y: 0 } : undefined}
         transition={{ duration: 0.8, ease, delay: 1.2 }}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        className="group flex h-14 items-center gap-3 rounded-full bg-primary pl-2 pr-5 text-white ring-1 ring-white/15 shadow-[0_20px_40px_-15px_rgba(42,86,119,0.6)]"
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        className="liquid-glass relative grid size-16 place-items-center rounded-full"
       >
-        <span className="relative grid size-10 place-items-center rounded-full bg-white font-jp text-lg text-primary">
-          {open ? "✕" : "海"}
-          {!open && <span className="absolute inset-0 animate-ping rounded-full bg-accent/60 [animation-duration:2.5s]" />}
-        </span>
-        <span className="text-sm font-medium tracking-wide">SEA AI</span>
+        {/* Logo berputar 90° saat panel terbuka dan kembali saat tertutup, selaras dengan panel */}
+        <motion.span
+          aria-hidden
+          className="relative block size-11"
+          initial={false}
+          animate={{ rotate: open ? 90 : 0 }}
+          transition={panelTransition}
+        >
+          <Image src="/brand/logo.png" alt="" width={44} height={44} priority className="size-11 object-contain" />
+        </motion.span>
       </motion.button>
     </div>
   );

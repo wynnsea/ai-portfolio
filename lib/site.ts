@@ -1,7 +1,10 @@
 // Ubah data di file ini untuk mempersonalisasi seluruh website.
 // Data bertanda "dummy" masih contoh dan perlu diganti.
+import { projects } from "@/lib/projects";
+import { certifications } from "@/lib/certifications";
+
 export const site = {
-  brand: "WYNNSEA",
+  brand: "Wynnsea",
   name: "Wayan",
   nameJp: "ワヤン",
   role: "Junior AI Engineer",
@@ -21,8 +24,13 @@ export const site = {
   email: "wayaandeva123@gmail.com",
   // Ganti dengan foto kamu, misalnya "/images/profile.jpg"
   photo: "/images/wyn.jpg",
+  // File CV: taruh PDF di public/cv/ lalu isi path-nya, mis. "/cv/CV-Wayan.pdf".
+  // Selama kosong, tombol Download CV tidak ditampilkan.
+  cv: "",
   stats: [
-    { value: "6", label: "Proyek kelar" }, // dummy
+    // Dihitung otomatis dari data, jadi selalu sesuai dengan yang ditampilkan
+    { value: String(projects.length), label: "Proyek" },
+    { value: String(certifications.length), label: "Sertifikasi" },
     { value: "3", label: "Tahun ngulik" },
   ],
   nav: [

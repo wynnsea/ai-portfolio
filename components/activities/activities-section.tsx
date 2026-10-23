@@ -3,6 +3,7 @@ import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { ActivityCard } from "@/components/activities/activity-card";
 import { Wave } from "@/components/wave";
+import { EmptyState } from "@/components/empty-state";
 
 export function ActivitiesSection() {
   return (
@@ -32,11 +33,15 @@ export function ActivitiesSection() {
           </p>
         </Reveal>
 
+        {activities.length === 0 ? (
+          <EmptyState kanji="活" title="Belum ada kegiatan" className="mt-16 md:mt-24" />
+        ) : (
         <div className="mt-16 grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-8 md:mt-24 lg:grid-cols-3 lg:gap-x-10 lg:gap-y-16">
           {activities.map((activity, i) => (
             <ActivityCard key={activity.title} activity={activity} index={i} />
           ))}
         </div>
+        )}
       </div>
     </section>
   );

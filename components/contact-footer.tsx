@@ -37,6 +37,13 @@ export function ContactFooter() {
                 </a>
               </li>
             ))}
+            {site.cv && (
+              <li>
+                <a href={site.cv} download className="text-white/60 transition-colors hover:text-white">
+                  Download CV <span aria-hidden>↓</span>
+                </a>
+              </li>
+            )}
           </ul>
         </Reveal>
         <div className="mt-24 flex flex-col justify-between gap-2 border-t border-white/10 pt-6 text-xs text-white/40 md:flex-row">

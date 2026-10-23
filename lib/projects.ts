@@ -1,5 +1,5 @@
-// Data project DUMMY, ganti dengan project asli kamu.
-// `cover` opsional: isi dengan path gambar (mis. "/images/projects/kanji-lens.jpg")
+// Data project. Field bertanda "isi" belum diketahui, lengkapi sesuai project asli.
+// `cover` opsional: isi dengan path gambar (mis. "/images/projects/minori-ai-rcr.jpg")
 // untuk mengganti cover kanji yang dibuat otomatis.
 
 export type CoverTone = "dark" | "mid" | "light";
@@ -26,84 +26,38 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "nihongo-buddy",
-    title: "Nihongo Buddy",
-    titleJp: "日本語バディ",
-    kanji: "話",
+    slug: "minori-ai-rcr",
+    title: "Minori AI RCR",
+    titleJp: "採用AIシステム",
+    kanji: "採",
     tone: "dark",
-    category: "LLM · RAG",
-    year: "2026",
-    role: "AI Integration Engineer",
-    duration: "2 bulan",
-    summary: "Tutor bahasa Jepang berbasis chat yang benerin grammar kamu dan jelasin alasannya, pakai referensi dari materi asli.",
-    overview: "Nihongo Buddy itu tutor chat buat orang Indonesia yang lagi belajar bahasa Jepang. Saya gak training model sendiri. Saya gabungin API LLM yang udah ada sama pipeline RAG dari catatan grammar, jadi tiap koreksi selalu ada rujukan ke materi yang pas.",
-    challenge: "LLM umum suka over-correct atau ngarang aturan grammar. Tutornya harus sesuai level (N5 sampai N3), pakai sumber yang bisa dipercaya, dan biaya API-nya harus tetap murah biar bisa gratis.",
-    approach: [
-      "Mecah dan nge-embed catatan grammar per poin grammar dan level JLPT, terus disimpan di pgvector.",
-      "Nyambungin API LLM dengan prompt yang misahin balasan ngobrol sama blok koreksi yang terstruktur.",
-      "Filter hasil retrieval sesuai level user biar penjelasannya gak ketinggian.",
-      "Nambahin caching dan streaming biar chat tetap cepet dan tagihan token gak bengkak.",
-    ],
-    results: [
-      { value: "87%", label: "Koreksi dinilai membantu" },
-      { value: "-60%", label: "Biaya API setelah caching" },
-      { value: "4.8", label: "Rating rata-rata user" },
-    ],
-    stack: ["Next.js", "Vercel AI SDK", "API LLM", "pgvector", "PostgreSQL", "TypeScript"],
-    links: { demo: "#", source: "#" },
-  },
-  {
-    slug: "kanji-lens",
-    title: "Kanji Lens",
-    titleJp: "漢字レンズ",
-    kanji: "字",
-    tone: "light",
-    category: "Vision API",
-    year: "2025",
-    role: "AI Integration & Frontend",
-    duration: "6 minggu",
-    summary: "Arahin kamera ke kanji, langsung dapet cara baca, arti, dan contoh kalimatnya.",
-    overview: "Kanji Lens itu web app buat pejuang JLPT. Foto papan, menu, atau buku, terus app-nya baca teks Jepangnya dan jelasin tiap kanji: cara baca, arti dalam bahasa Inggris dan Indonesia, plus contoh kalimat. Semuanya hasil ngerangkai vision model sama API kamus.",
-    challenge: "Vision model kadang ngasih teks bebas yang susah diolah, dan hasil kamusnya harus tetap akurat walaupun fotonya blur atau miring.",
-    approach: [
-      "Kirim gambar ke API LLM yang bisa baca gambar, dengan skema JSON yang ketat buat kata dan kanji yang kedeteksi.",
-      "Cek ulang tiap kanji ke API kamus Jepang publik biar artinya gak halu.",
-      "Bikin tampilan Next.js yang mobile-first, lengkap dengan kamera dan overlay tap-to-explain.",
-      "Nambahin fallback dan retry kalau API-nya ngasih hasil yang kurang yakin.",
-    ],
-    results: [
-      { value: "92%", label: "Kanji kebaca dengan benar" },
-      { value: "1.8s", label: "Rata-rata sampai penjelasan muncul" },
-      { value: "1.2k", label: "Pengguna per bulan" },
-    ],
-    stack: ["Next.js", "Vision LLM API", "API Kamus", "Zod", "Tailwind CSS"],
-    links: { demo: "#", source: "#" },
-  },
-  {
-    slug: "face-attendance",
-    title: "Face Attendance",
-    titleJp: "顔認証出席",
-    kanji: "顔",
-    tone: "mid",
-    category: "Computer Vision",
-    year: "2026",
+    category: "AI Grading · Rekrutmen",
+    year: "2026", // isi: pastikan tahunnya
     role: "Full-stack & AI Integration",
-    duration: "Tugas akhir",
-    summary: "Absensi kampus pakai face recognition. Ini tugas akhir D3 saya di Politeknik Takumi.",
-    overview: "Sistem absensi tanpa sentuh buat kelas. Mahasiswa tinggal lewat depan kamera, model face recognition yang udah jadi langsung ngenalin mereka, absen kecatat otomatis, dan dosen bisa cek semuanya dari dashboard web.",
-    challenge: "Pencahayaan di kelas berubah-ubah sepanjang hari, dan sistemnya harus bisa nolak orang yang nyoba curang pakai foto cetak.",
+    duration: "2 bulan", // isi: sesuaikan durasi pengerjaan
+    summary:
+      "Website walk-in rekrutmen untuk PT Minori dengan AI yang menilai calon pemagang secara otomatis, jadi tim rekrutmen bisa langsung filter kandidat berdasarkan grade.",
+    overview:
+      "Minori AI RCR adalah website walk-in rekrutmen untuk calon pemagang di PT Minori. Peserta mendaftar dan mengisi biodata langsung di website, lalu mengerjakan tes. Di dalam sistemnya saya integrasikan AI yang mengolah biodata dan hasil tes tiap peserta menjadi satu grade. Dari dashboard, tim rekrutmen tinggal filter dan urutkan kandidat berdasarkan grade, gak perlu cek satu per satu lagi.",
+    challenge:
+      "Saat walk-in, pendaftar bisa datang banyak dalam waktu singkat. Menilai biodata dan hasil tes satu per satu itu makan waktu, dan hasilnya bisa beda-beda tergantung siapa yang menilai. Sistemnya harus memberi penilaian yang konsisten untuk semua peserta dan tetap mudah dipahami tim rekrutmen.",
     approach: [
-      "Pakai library face recognition yang udah ter-training, bukan bikin model dari nol.",
-      "Nambahin cek kedipan mata buat nolak foto palsu.",
-      "Bikin dashboard dosen yang bisa export ke spreadsheet.",
+      "Membangun alur walk-in di website: pendaftaran, pengisian biodata, sampai tes peserta dalam satu tempat.",
+      "Menyusun kriteria penilaian dari biodata dan hasil tes, lalu menerjemahkannya jadi instruksi yang dipakai AI saat memberi grade.",
+      "Mengintegrasikan AI ke dalam sistem supaya grade tiap peserta dihitung otomatis setelah tes selesai.",
+      "Membuat dashboard rekrutmen untuk memfilter, mengurutkan, dan melihat detail kandidat berdasarkan grade.",
     ],
+    // isi: ganti dengan angka asli kalau ada (mis. jumlah peserta, waktu seleksi yang dihemat)
     results: [
-      { value: "97%", label: "Akurasi pengenalan wajah" },
-      { value: "3s", label: "Rata-rata waktu absen" },
-      { value: "A", label: "Nilai tugas akhir" },
+      { value: "Otomatis", label: "Grading dari biodata & hasil tes" },
+      { value: "Grade", label: "Jadi dasar filter kandidat" },
+      {
+        value: "1 sistem",
+        label: "Daftar, tes, dan penilaian dalam satu website",
+      },
     ],
-    stack: ["Python", "OpenCV", "face_recognition", "Flask", "MySQL"],
-    links: { source: "#" },
+    stack: ["Laravel", "React", "Integrasi LLM", "FastAPI", "MySQL"],
+    links: {}, 
   },
 ];
 

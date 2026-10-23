@@ -15,6 +15,36 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const lenis = useLenis();
   const isHome = usePathname() === "/";
+  const [active, setActive] = useState<string | null>(null);
+
+  // Penanda menu aktif: section terakhir yang bagian atasnya sudah melewati 40% tinggi layar
+  useEffect(() => {
+    if (!isHome) return;
+    const hashes = [...site.nav.map((item) => item.href), "#contact"];
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.4;
+      let found: string | null = null;
+      for (const hash of hashes) {
+        const el = document.querySelector(hash);
+        if (el && el.getBoundingClientRect().top <= line) found = hash;
+      }
+      setActive(found);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    frame = requestAnimationFrame(update);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [isHome]);
+  const current = isHome ? active : null;
 
   // Di halaman utama: smooth scroll ke section. Di halaman lain: navigasi biasa ke "/#section".
   const go = (hash: string) => (e: React.MouseEvent) => {
@@ -69,9 +99,18 @@ export function Navbar() {
           <ul className="hidden items-center gap-6 text-sm text-primary lg:flex xl:gap-8">
             {site.nav.map((item) => (
               <li key={item.href}>
-                <Link href={`/${item.href}`} onClick={go(item.href)} className="group relative whitespace-nowrap py-1">
+                <Link
+                  href={`/${item.href}`}
+                  onClick={go(item.href)}
+                  aria-current={current === item.href ? "location" : undefined}
+                  className={`group relative whitespace-nowrap py-1 transition-colors ${current === item.href ? "font-medium text-primary" : current ? "text-secondary hover:text-primary" : ""}`}
+                >
                   {item.label}
-                  <span className="absolute inset-x-0 -bottom-0.5 h-px origin-right scale-x-0 bg-primary transition-transform duration-500 ease-expo group-hover:origin-left group-hover:scale-x-100" />
+                  <span
+                    className={`absolute inset-x-0 -bottom-0.5 h-px bg-primary transition-transform duration-500 ease-expo ${
+                      current === item.href ? "origin-left scale-x-100" : "origin-right scale-x-0 group-hover:origin-left group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
               </li>
             ))}
@@ -97,7 +136,7 @@ export function Navbar() {
             onClick={go("#contact")}
             className="hidden items-center gap-1.5 whitespace-nowrap border-b border-primary pb-0.5 text-sm font-medium md:inline-flex"
           >
-            Ayo Ngobrol <span aria-hidden>↗</span>
+            Let&apos;s Talk <span aria-hidden>↗</span>
           </Link>
           <button
             type="button"
@@ -137,9 +176,13 @@ export function Navbar() {
                   <Link
                     href={`/${item.href}`}
                     onClick={go(item.href)}
-                    className="flex items-center justify-between py-4 text-2xl font-light tracking-tight md:py-5 md:text-3xl"
+                    aria-current={current === item.href ? "location" : undefined}
+                    className={`flex items-center justify-between py-4 text-2xl tracking-tight md:py-5 md:text-3xl ${current === item.href ? "font-normal" : "font-light"}`}
                   >
-                    {item.label}
+                    <span className="flex items-center gap-3">
+                      {current === item.href && <span aria-hidden className="size-2 rounded-full bg-accent" />}
+                      {item.label}
+                    </span>
                     <span aria-hidden className="text-base text-secondary">
                       {String(i + 1).padStart(2, "0")}
                     </span>

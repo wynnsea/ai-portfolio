@@ -6,6 +6,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { ProjectCover } from "@/components/projects/project-cover";
 import { BlogList } from "@/components/blog/blog-list";
 import { Wave } from "@/components/wave";
+import { EmptyState } from "@/components/empty-state";
 
 export function BlogSection() {
   const [featured, ...rest] = sortedPosts;
@@ -34,6 +35,8 @@ export function BlogSection() {
           </p>
         </Reveal>
 
+        {featured ? (
+          <>
         {/* Artikel terbaru */}
         <Link href={`/blog/${featured.slug}`} className="group mt-16 grid items-center gap-8 md:mt-24 md:grid-cols-12 md:gap-12">
           <Reveal className="md:col-span-7">
@@ -61,6 +64,15 @@ export function BlogSection() {
         <div className="mt-20 md:mt-28">
           <BlogList posts={rest} startIndex={1} />
         </div>
+          </>
+        ) : (
+          <EmptyState
+            kanji="書"
+            title="Belum ada artikel"
+            description="Tulisan pertama lagi disiapin. Nanti isinya soal integrasi AI, cerita karier, dan budaya Jepang."
+            className="mt-16 md:mt-24"
+          />
+        )}
       </div>
     </section>
   );

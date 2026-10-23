@@ -22,7 +22,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
-  title: { default: `${site.brand} | ${site.name}, ${site.role}`, template: `%s | ${site.brand}` },
+  title: site.brand,
   description: site.metaDescription,
   openGraph: {
     type: "website",

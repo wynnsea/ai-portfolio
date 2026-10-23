@@ -3,6 +3,7 @@ import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCard, type CardLayout } from "@/components/projects/project-card";
 import { Wave } from "@/components/wave";
+import { EmptyState } from "@/components/empty-state";
 
 // Susunan "berantakan" yang disengaja: lebar, posisi, rasio, kemiringan, dan kecepatan parallax berbeda.
 const layouts: CardLayout[] = [
@@ -39,11 +40,15 @@ export function ProjectsSection() {
           </p>
         </Reveal>
 
+        {projects.length === 0 ? (
+          <EmptyState kanji="作" title="Belum ada proyek" description="Proyek lagi disiapin, ditunggu ya." className="mt-16 md:mt-24" />
+        ) : (
         <div className="mt-24 flex flex-col gap-28 md:mt-36 md:gap-0 md:pb-24">
           {projects.map((project, i) => (
             <ProjectCard key={project.slug} project={project} index={i} layout={layouts[i % layouts.length]} />
           ))}
         </div>
+        )}
       </div>
     </section>
   );

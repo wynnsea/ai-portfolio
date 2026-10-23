@@ -3,6 +3,7 @@ import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { CertCard } from "@/components/certifications/cert-card";
 import { Wave } from "@/components/wave";
+import { EmptyState } from "@/components/empty-state";
 
 export function CertificationsSection() {
   return (
@@ -32,11 +33,15 @@ export function CertificationsSection() {
           </p>
         </Reveal>
 
+        {certifications.length === 0 ? (
+          <EmptyState kanji="資" title="Belum ada sertifikasi" className="mt-16 md:mt-24" />
+        ) : (
         <div className="mt-16 grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-8 md:mt-24 lg:grid-cols-4 lg:pb-4">
           {certifications.map((cert, i) => (
             <CertCard key={cert.title} cert={cert} index={i} />
           ))}
         </div>
+        )}
       </div>
     </section>
   );

@@ -108,9 +108,8 @@ export function Hero() {
 
           <motion.div variants={fadeUp} custom={0.6} initial="hidden" animate={state} className="mb-8 flex gap-10 lg:mb-10">
             {site.stats.map((s) => (
-              <div key={s.value}>
+              <div key={s.label}>
                 <p className="text-3xl font-light tracking-tight md:text-4xl">
-                  <sup className="mr-0.5 text-base font-normal">+</sup>
                   {s.value}
                 </p>
                 <p className="mt-1 text-xs text-secondary">{s.label}</p>
@@ -140,21 +139,28 @@ export function Hero() {
             {site.description}
           </motion.p>
 
-          <motion.a
-            variants={fadeUp}
-            custom={1.1}
-            initial="hidden"
-            animate={state}
-            href="#statement"
-            onClick={(e) => {
-              e.preventDefault();
-              lenis?.scrollTo("#statement", { duration: 1.4 });
-            }}
-            className="group mt-10 inline-flex w-fit items-center gap-2 text-sm"
-          >
-            Gulir ke bawah
-            <span aria-hidden className="inline-block animate-bounce">↓</span>
-          </motion.a>
+          <motion.div variants={fadeUp} custom={1.1} initial="hidden" animate={state} className="mt-10 flex flex-wrap items-center gap-6">
+            {site.cv && (
+              <a
+                href={site.cv}
+                download
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm text-white transition-opacity hover:opacity-85"
+              >
+                Download CV <span aria-hidden>↓</span>
+              </a>
+            )}
+            <a
+              href="#statement"
+              onClick={(e) => {
+                e.preventDefault();
+                lenis?.scrollTo("#statement", { duration: 1.4 });
+              }}
+              className="group inline-flex w-fit items-center gap-2 text-sm"
+            >
+              Gulir ke bawah
+              <span aria-hidden className="inline-block animate-bounce">↓</span>
+            </a>
+          </motion.div>
         </motion.div>
       </div>
     </section>
