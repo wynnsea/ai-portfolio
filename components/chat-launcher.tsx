@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
-import { site } from "@/lib/site";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import type { SeaAction, SeaReply } from "@/lib/ai/types";
 import { useIntro } from "@/components/providers/intro-provider";
 import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
@@ -24,13 +24,12 @@ const suggestions = [
 
 type Message = { id: number; role: "user" | "assistant"; text: string; action?: SeaAction };
 
-const greetingText = `こんにちは! Saya SEA AI, asisten pribadinya ${site.name}. Mau tau soal proyek, keahlian, pengalaman, atau cara ngontak dia? Tanya aja!`;
-
 const greeting: Message = { id: 0, role: "assistant", text: "" };
 
 /** Tombol mengambang + panel chat SEA AI (versi demo, jawaban dari /api/sea). */
 export function ChatLauncher() {
   const { done } = useIntro();
+  const settings = useSiteSettings();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([greeting]);
   const [input, setInput] = useState("");
@@ -97,6 +96,8 @@ export function ChatLauncher() {
     if (window.innerWidth < 768) setOpen(false);
   }
 
+  if (!settings.features.chatbot) return null;
+
   return (
     <div data-chat-launcher className="fixed bottom-5 right-5 z-60 flex flex-col items-end gap-3 md:bottom-8 md:right-8">
       <AnimatePresence>
@@ -138,7 +139,7 @@ export function ChatLauncher() {
                 ) : (
                   <div key={m.id} className="max-w-[88%] space-y-2">
                     <div className="rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3 text-sm leading-relaxed">
-                      {m.id === 0 ? greetingText : <Typewriter text={m.text} />}
+                      {m.id === 0 ? `こんにちは! Saya SEA AI, asisten pribadinya ${settings.name}. Mau tau soal proyek, keahlian, pengalaman, atau cara ngontak dia? Tanya aja!` : <Typewriter text={m.text} />}
                     </div>
                     {m.action && (
                       <button

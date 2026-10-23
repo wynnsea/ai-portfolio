@@ -1,11 +1,11 @@
-import { activities } from "@/lib/activities";
+import type { Activity } from "@/lib/activities";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { ActivityCard } from "@/components/activities/activity-card";
 import { Wave } from "@/components/wave";
 import { EmptyState } from "@/components/empty-state";
 
-export function ActivitiesSection() {
+export function ActivitiesSection({ activities }: { activities: Activity[] }) {
   return (
     <section id="activities" className="relative overflow-hidden bg-white py-28 md:py-40">
       <Wave from="tertiary" />

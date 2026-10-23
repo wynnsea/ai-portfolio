@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { Globe, KeyRound, Plug, User } from "lucide-react";
 import { site } from "@/lib/site";
-import { API_URL } from "@/lib/admin/api";
+import { API_URL, getSettings, updatePassword, updateSettings, uploadFile, type SiteSettings } from "@/lib/admin/api";
 import { Button, Card, Field, Input, PageHeader, Textarea, Toggle, useToast } from "@/components/admin/ui";
 
 const tabs = [
@@ -36,10 +36,94 @@ export function Settings() {
   const [chatbot, setChatbot] = useState(true);
   const [preloader, setPreloader] = useState(true);
   const [twoFa, setTwoFa] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>({
+    brand: site.brand,
+    name: site.name,
+    nameJp: site.nameJp,
+    role: site.role,
+    description: site.description,
+    location: site.location,
+    email: site.email,
+    photoUrl: null,
+    cvUrl: site.cv || null,
+    availability: site.availability,
+    socials: [...site.socials],
+    features: { chatbot: true, preloader: true },
+  });
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirmation: "" });
+  const photoInput = useRef<HTMLInputElement>(null);
 
-  const save = (e: React.FormEvent) => {
+  useEffect(() => {
+    let active = true;
+    getSettings()
+      .then((result) => {
+        if (!active) return;
+        setSettings(result);
+        setAvailable(result.availability.open);
+        setChatbot(result.features.chatbot);
+        setPreloader(result.features.preloader);
+      })
+      .catch((error: unknown) => {
+        if (active) toast(error instanceof Error ? error.message : "Gagal memuat pengaturan.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [toast]);
+
+  const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast("Perubahan disimpan (demo, belum tersambung ke API)");
+    try {
+      const updated = await updateSettings({
+        name: settings.name,
+        email: settings.email,
+        role: settings.role,
+        location: settings.location,
+        description: settings.description,
+      });
+      setSettings(updated);
+      toast("Profil berhasil disimpan.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal menyimpan profil.");
+    }
+  };
+
+  const saveWebsite = async () => {
+    try {
+      const updated = await updateSettings({
+        availability: { ...settings.availability, open: available },
+        features: { chatbot, preloader },
+      });
+      setSettings(updated);
+      toast("Pengaturan website berhasil disimpan.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal menyimpan pengaturan website.");
+    }
+  };
+
+  const savePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updatePassword(passwords.current, passwords.next, passwords.confirmation);
+      setPasswords({ current: "", next: "", confirmation: "" });
+      toast("Password berhasil diubah.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal mengubah password.");
+    }
+  };
+
+  const uploadPhoto = async (file?: File) => {
+    if (!file) return;
+    try {
+      const uploaded = await uploadFile(file, "profile");
+      const updated = await updateSettings({ photoUrl: uploaded.url });
+      setSettings(updated);
+      toast("Foto profil berhasil diperbarui.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal mengunggah foto profil.");
+    } finally {
+      if (photoInput.current) photoInput.current.value = "";
+    }
   };
 
   return (
@@ -66,29 +150,36 @@ export function Settings() {
       <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {tab === "profil" && (
           <Card className="p-6">
-            <form onSubmit={save} className="grid gap-5 md:grid-cols-[auto_1fr]">
+            <form onSubmit={saveProfile} className="grid gap-5 md:grid-cols-[auto_1fr]">
               <div className="flex flex-col items-center gap-3">
-                <Image src={site.photo} alt={site.name} width={112} height={112} className="size-28 rounded-3xl object-cover object-top ring-4 ring-white" />
-                <Button variant="outline" size="sm" onClick={() => toast("Upload foto aktif setelah API siap")}>
+                <Image src={settings.photoUrl || site.photo} alt={settings.name} width={112} height={112} unoptimized className="size-28 rounded-3xl object-cover object-top ring-4 ring-white" />
+                <input
+                  ref={photoInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(event) => void uploadPhoto(event.target.files?.[0])}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => photoInput.current?.click()}>
                   Ganti foto
                 </Button>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Nama">
-                  <Input defaultValue={site.name} />
+                  <Input value={settings.name} onChange={(event) => setSettings({ ...settings, name: event.target.value })} />
                 </Field>
                 <Field label="Email">
-                  <Input type="email" defaultValue={site.email} />
+                  <Input type="email" value={settings.email} onChange={(event) => setSettings({ ...settings, email: event.target.value })} />
                 </Field>
                 <Field label="Role">
-                  <Input defaultValue="Junior AI Engineer" />
+                  <Input value={settings.role} onChange={(event) => setSettings({ ...settings, role: event.target.value })} />
                 </Field>
                 <Field label="Lokasi">
-                  <Input placeholder="mis. Bekasi, Indonesia" />
+                  <Input value={settings.location} placeholder="mis. Bekasi, Indonesia" onChange={(event) => setSettings({ ...settings, location: event.target.value })} />
                 </Field>
                 <div className="sm:col-span-2">
                   <Field label="Bio singkat">
-                    <Textarea defaultValue="Interest terhadap perkembangan teknologi di bidang AI, dan suka mengintegrasikan AI ke sistem. Tertarik juga sama budaya Jepang." />
+                    <Textarea value={settings.description} onChange={(event) => setSettings({ ...settings, description: event.target.value })} />
                   </Field>
                 </div>
                 <div className="flex justify-end sm:col-span-2">
@@ -111,22 +202,22 @@ export function Settings() {
               <Toggle checked={preloader} onChange={setPreloader} label="Animasi intro" />
             </Row>
             <div className="flex justify-end pt-2">
-              <Button onClick={() => toast("Pengaturan website disimpan (demo)")}>Simpan</Button>
+              <Button onClick={() => void saveWebsite()}>Simpan</Button>
             </div>
           </Card>
         )}
 
         {tab === "keamanan" && (
           <Card className="p-6">
-            <form onSubmit={save} className="grid max-w-xl gap-4">
+            <form onSubmit={savePassword} className="grid max-w-xl gap-4">
               <Field label="Password lama">
-                <Input type="password" autoComplete="current-password" />
+                <Input type="password" autoComplete="current-password" value={passwords.current} onChange={(event) => setPasswords({ ...passwords, current: event.target.value })} />
               </Field>
               <Field label="Password baru" hint="Minimal 8 karakter">
-                <Input type="password" autoComplete="new-password" />
+                <Input type="password" autoComplete="new-password" value={passwords.next} onChange={(event) => setPasswords({ ...passwords, next: event.target.value })} />
               </Field>
               <Field label="Ulangi password baru">
-                <Input type="password" autoComplete="new-password" />
+                <Input type="password" autoComplete="new-password" value={passwords.confirmation} onChange={(event) => setPasswords({ ...passwords, confirmation: event.target.value })} />
               </Field>
               <Row title="Verifikasi 2 langkah" desc="Kode tambahan saat login">
                 <Toggle checked={twoFa} onChange={setTwoFa} label="Verifikasi 2 langkah" />
@@ -148,8 +239,8 @@ export function Settings() {
             <Row title="Gemini (SEA AI & Job Match)" desc="Kunci API disimpan di server (GEMINI_API_KEY), tidak tampil di sini">
               <span className="rounded-full bg-ad-soft px-2.5 py-1 text-[11px] font-medium text-ad-deep">Server-side</span>
             </Row>
-            <Row title="Autentikasi" desc="Rencana: Laravel Sanctum (token Bearer)">
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">Rencana</span>
+            <Row title="Autentikasi" desc="Laravel Sanctum (token Bearer)">
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">Aktif</span>
             </Row>
           </Card>
         )}

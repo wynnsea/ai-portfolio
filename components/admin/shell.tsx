@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { Bell, ExternalLink, Mail, Menu, Search, X } from "lucide-react";
 import { adminNav } from "@/lib/admin/nav";
 import { site } from "@/lib/site";
-import { seed } from "@/lib/admin/data";
+import { getDashboard, getMe, logout, type DashboardData } from "@/lib/admin/api";
 import { useToast } from "@/components/admin/ui";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -18,7 +18,7 @@ function isActive(pathname: string, href: string) {
 }
 
 /* ---------- Sidebar ---------- */
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar({ onNavigate, unread, onLogout }: { onNavigate?: () => void; unread: number; onLogout: () => void }) {
   const pathname = usePathname();
   return (
     <div className="ad-glass flex h-full flex-col rounded-3xl p-5">
@@ -43,7 +43,13 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     {active && <motion.span layoutId="ad-nav-indicator" className="absolute -left-5 top-1.5 h-7 w-1 rounded-r-full bg-ad" />}
                     <Link
                       href={item.href}
-                      onClick={onNavigate}
+                      onClick={(event) => {
+                        if (item.href === "/admin/login") {
+                          event.preventDefault();
+                          onLogout();
+                        }
+                        onNavigate?.();
+                      }}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors ${
                         active ? "bg-white font-semibold text-ad-deep shadow-[0_6px_16px_-10px_rgba(47,98,214,0.5)]" : "text-ad-muted hover:bg-white/60 hover:text-ad-ink"
@@ -51,7 +57,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     >
                       <Icon className="size-[18px]" />
                       <span className="flex-1">{item.label}</span>
-                      {item.badge && <span className="rounded-full bg-ad px-2 py-0.5 text-[10px] font-semibold text-white">{item.badge}</span>}
+                      {item.href === "/admin/pesan" && unread > 0 && (
+                        <span className="rounded-full bg-ad px-2 py-0.5 text-[10px] font-semibold text-white">{unread}</span>
+                      )}
                     </Link>
                   </li>
                 );
@@ -81,10 +89,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /* ---------- Topbar ---------- */
-function Topbar({ onMenu }: { onMenu: () => void }) {
+function Topbar({ onMenu, dashboard }: { onMenu: () => void; dashboard: DashboardData | null }) {
   const toast = useToast();
   const [notifOpen, setNotifOpen] = useState(false);
-  const newMessages = seed.pesan.filter((m) => m.status === "Baru");
+  const newMessages = dashboard?.latestMessages.filter((message) => message.status === "Baru") ?? [];
 
   return (
     // relative z-30: backdrop-filter membuat stacking context sendiri, jadi header perlu z-index
@@ -161,7 +169,54 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
 /* ---------- Kerangka panel admin ---------- */
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [drawer, setDrawer] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const toast = useToast();
+
+  useEffect(() => {
+    let active = true;
+    const onUnauthorized = () => router.replace("/admin/login");
+    const refreshDashboard = () =>
+      getDashboard()
+        .then((data) => {
+          if (active) setDashboard(data);
+        })
+        .catch((error: unknown) => {
+          if (active) toast(error instanceof Error ? error.message : "Gagal memuat ringkasan admin.");
+        });
+    const onDashboardRefresh = () => void refreshDashboard();
+
+    window.addEventListener("admin:unauthorized", onUnauthorized);
+    window.addEventListener("admin:dashboard-refresh", onDashboardRefresh);
+
+    getMe()
+      .then(() => {
+        if (!active) return;
+        setAuthenticated(true);
+        return refreshDashboard();
+      })
+      .catch(() => {
+        if (active) router.replace("/admin/login");
+      });
+
+    return () => {
+      active = false;
+      window.removeEventListener("admin:unauthorized", onUnauthorized);
+      window.removeEventListener("admin:dashboard-refresh", onDashboardRefresh);
+    };
+  }, [router, toast]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal keluar dari panel admin.");
+    } finally {
+      router.replace("/admin/login");
+    }
+  };
 
   // Tutup drawer dengan Esc
   useEffect(() => {
@@ -171,11 +226,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawer]);
 
+  if (!authenticated) return null;
+
   return (
     <div className="mx-auto flex min-h-svh max-w-[1500px] gap-5 p-3 md:p-5">
       {/* Sidebar desktop */}
       <aside className="sticky top-5 hidden h-[calc(100svh-2.5rem)] w-64 shrink-0 lg:block">
-        <Sidebar />
+        <Sidebar unread={dashboard?.counts.unreadMessages ?? 0} onLogout={handleLogout} />
       </aside>
 
       {/* Sidebar mobile (drawer) */}
@@ -196,7 +253,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               transition={{ duration: 0.4, ease }}
               className="fixed inset-y-3 left-3 z-50 w-72 lg:hidden"
             >
-              <Sidebar onNavigate={() => setDrawer(false)} />
+              <Sidebar unread={dashboard?.counts.unreadMessages ?? 0} onLogout={handleLogout} onNavigate={() => setDrawer(false)} />
               <button type="button" onClick={() => setDrawer(false)} aria-label="Tutup menu" className="absolute right-4 top-5 grid size-9 place-items-center rounded-full text-ad-muted hover:bg-white">
                 <X className="size-4" />
               </button>
@@ -206,7 +263,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col gap-5">
-        <Topbar onMenu={() => setDrawer(true)} />
+        <Topbar onMenu={() => setDrawer(true)} dashboard={dashboard} />
         <motion.main
           key={pathname}
           initial={{ opacity: 0, y: 10 }}

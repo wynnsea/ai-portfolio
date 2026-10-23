@@ -5,6 +5,7 @@ import { ChatLauncher } from "@/components/chat-launcher";
 import { CommandPalette } from "@/components/ai/command-palette";
 import { InlineScript } from "@/components/inline-script";
 import { buildSearchIndex } from "@/lib/ai/search-index";
+import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
 
 /**
  * Semua elemen khas website portfolio: preloader, smooth scroll, navbar, SEA AI, dan pencarian.
@@ -12,17 +13,19 @@ import { buildSearchIndex } from "@/lib/ai/search-index";
  */
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      {/* Set status intro di <html> sebelum preloader dirender (kunci scroll / lewati preloader) */}
-      <InlineScript html={introScript} />
-      <SmoothScroll>
-        <IntroProvider>
-          <Navbar />
-          {children}
-          <ChatLauncher />
-          <CommandPalette items={buildSearchIndex()} />
-        </IntroProvider>
-      </SmoothScroll>
-    </>
+    <SiteSettingsProvider>
+      <>
+        {/* Set status intro di <html> sebelum preloader dirender (kunci scroll / lewati preloader) */}
+        <InlineScript html={introScript} />
+        <SmoothScroll>
+          <IntroProvider>
+            <Navbar />
+            {children}
+            <ChatLauncher />
+            <CommandPalette items={buildSearchIndex()} />
+          </IntroProvider>
+        </SmoothScroll>
+      </>
+    </SiteSettingsProvider>
   );
 }

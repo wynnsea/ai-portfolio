@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, useScroll, useTransform, type Variants } from "motion/react";
 import { useLenis } from "lenis/react";
 import { site } from "@/lib/site";
+import type { SiteSettings } from "@/lib/public-api";
 import { useIntro } from "@/components/providers/intro-provider";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -19,7 +20,15 @@ const letter: Variants = {
   show: (i: number) => ({ y: 0, transition: { duration: 1.1, ease, delay: 0.15 + i * 0.06 } }),
 };
 
-export function Hero() {
+export function Hero({
+  settings,
+  projectCount,
+  certificationCount,
+}: {
+  settings: SiteSettings;
+  projectCount: number;
+  certificationCount: number;
+}) {
   const { done } = useIntro();
   const lenis = useLenis();
   const ref = useRef<HTMLElement>(null);
@@ -52,9 +61,9 @@ export function Hero() {
         animate={state}
         className="absolute bottom-10 left-8 top-28 hidden flex-col items-center gap-6 text-[11px] uppercase tracking-[0.25em] text-secondary lg:flex"
       >
-        <span className="[writing-mode:vertical-rl] rotate-180">{site.role}</span>
+        <span className="[writing-mode:vertical-rl] rotate-180">{settings.role}</span>
         <span className="w-px flex-1 bg-line" />
-        <span className="font-jp text-sm tracking-[0.4em] text-primary [writing-mode:vertical-rl]">{site.nameJp}</span>
+        <span className="font-jp text-sm tracking-[0.4em] text-primary [writing-mode:vertical-rl]">{settings.nameJp}</span>
       </motion.div>
 
       <div className="relative mx-auto grid min-h-svh max-w-7xl grid-cols-1 gap-10 px-6 pt-28 lg:grid-cols-2 lg:gap-6 lg:pl-24 lg:pt-24">
@@ -72,11 +81,12 @@ export function Hero() {
             >
               <motion.div style={{ scale: photoScale }} className="absolute inset-0">
                 <Image
-                  src={site.photo}
-                  alt={`Foto ${site.name}`}
+                  src={settings.photoUrl || site.photo}
+                  alt={`Foto ${settings.name}`}
                   fill
                   priority
                   sizes="(min-width: 1024px) 45vw, 90vw"
+                  unoptimized
                   className="object-cover object-top grayscale"
                 />
               </motion.div>
@@ -107,7 +117,11 @@ export function Hero() {
           )} */}
 
           <motion.div variants={fadeUp} custom={0.6} initial="hidden" animate={state} className="mb-8 flex gap-10 lg:mb-10">
-            {site.stats.map((s) => (
+            {[
+              { value: String(projectCount), label: "Proyek" },
+              { value: String(certificationCount), label: "Sertifikasi" },
+              { value: "3", label: "Tahun ngulik" },
+            ].map((s) => (
               <div key={s.label}>
                 <p className="text-3xl font-light tracking-tight md:text-4xl">
                   {s.value}
@@ -126,7 +140,7 @@ export function Hero() {
           </h1>
 
           <motion.p variants={fadeUp} custom={0.8} initial="hidden" animate={state} className="mt-4 text-base md:text-lg">
-            Saya <span className="font-medium">{site.name}</span>, {site.tagline}
+            Saya <span className="font-medium">{settings.name}</span>, {settings.role.toLowerCase()}
           </motion.p>
 
           <motion.p
@@ -136,13 +150,13 @@ export function Hero() {
             animate={state}
             className="mt-4 max-w-md text-sm leading-relaxed text-secondary md:text-base"
           >
-            {site.description}
+            {settings.description}
           </motion.p>
 
           <motion.div variants={fadeUp} custom={1.1} initial="hidden" animate={state} className="mt-10 flex flex-wrap items-center gap-6">
-            {site.cv && (
+            {settings.cvUrl && (
               <a
-                href={site.cv}
+                href={settings.cvUrl}
                 download
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm text-white transition-opacity hover:opacity-85"
               >

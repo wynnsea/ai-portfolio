@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { site } from "@/lib/site";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 
 const FIRST_MS = 650;
 const STEP_MS = 200;
@@ -12,6 +13,7 @@ const greetings = site.greetings;
 const TOTAL_MS = FIRST_MS + STEP_MS * (greetings.length - 2) + LAST_MS;
 
 export function Preloader({ onComplete }: { onComplete: () => void }) {
+  const settings = useSiteSettings();
   const [index, setIndex] = useState(0);
   const progress = useMotionValue(0);
   const counter = useTransform(progress, (v) => String(Math.round(v)).padStart(3, "0"));
@@ -46,8 +48,8 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
     >
       <div className="flex h-svh flex-col px-6 py-6 md:px-10 md:py-8">
       <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
-        <span className="font-semibold tracking-[0.3em] text-white">{site.brand}</span>
-        <span>{site.role}</span>
+        <span className="font-semibold tracking-[0.3em] text-white">{settings.brand}</span>
+        <span>{settings.role}</span>
       </div>
 
       <div className="flex flex-1 items-center justify-center">

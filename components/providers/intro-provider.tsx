@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState, useSyncExt
 import { AnimatePresence } from "motion/react";
 import { useLenis } from "lenis/react";
 import { Preloader } from "@/components/preloader";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 
 export const INTRO_STORAGE_KEY = "intro-seen";
 
@@ -29,7 +30,8 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   // Server selalu merender preloader; client membaca sessionStorage tanpa hydration error.
   const seen = useSyncExternalStore(noopSubscribe, readSeen, () => false);
   const [finished, setFinished] = useState(false);
-  const done = seen || finished;
+  const settings = useSiteSettings();
+  const done = seen || finished || !settings.features.preloader;
   const lenis = useLenis();
 
   const finish = useCallback(() => setFinished(true), []);
@@ -55,7 +57,7 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   return (
     <IntroContext.Provider value={{ done }}>
       {/* Jika intro sudah pernah dilihat, preloader dilepas tanpa animasi keluar */}
-      {!seen && (
+      {settings.features.preloader && !seen && (
         <AnimatePresence onExitComplete={markSeen}>{!finished && <Preloader key="preloader" onComplete={finish} />}</AnimatePresence>
       )}
       {children}

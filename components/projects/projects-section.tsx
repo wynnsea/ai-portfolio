@@ -1,4 +1,4 @@
-import { projects } from "@/lib/projects";
+import type { Project } from "@/lib/projects";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCard, type CardLayout } from "@/components/projects/project-card";
@@ -15,7 +15,7 @@ const layouts: CardLayout[] = [
   { wrap: "w-[88%] ml-auto md:w-[32%] md:mr-[16%] md:-mt-[2%]", aspect: "aspect-square", offset: -80, rotate: "-rotate-[2.5deg]" },
 ];
 
-export function ProjectsSection() {
+export function ProjectsSection({ projects }: { projects: Project[] }) {
   return (
     <section id="projects" className="relative overflow-hidden bg-white py-28 md:py-40">
       <Wave from="tertiary" />

@@ -6,12 +6,14 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import { site } from "@/lib/site";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import { useIntro } from "@/components/providers/intro-provider";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Navbar() {
   const { done } = useIntro();
+  const settings = useSiteSettings();
   const [open, setOpen] = useState(false);
   const lenis = useLenis();
   const isHome = usePathname() === "/";
@@ -90,10 +92,10 @@ export function Navbar() {
           <Link
             href="/"
             onClick={go("#home")}
-            aria-label={`${site.brand}, ke beranda`}
+            aria-label={`${settings.brand}, ke beranda`}
             className="shrink-0 text-base font-semibold tracking-[0.18em] md:text-lg"
           >
-            {site.brand}
+            {settings.brand}
           </Link>
           {/* Menu lengkap hanya di layar lebar (≥1024px) agar 5 item muat tanpa terpotong */}
           <ul className="hidden items-center gap-6 text-sm text-primary lg:flex xl:gap-8">
@@ -197,8 +199,8 @@ export function Navbar() {
               transition={{ delay: 0.35 }}
               className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <a href={`mailto:${site.email}`} className="text-sm text-secondary underline-offset-4 hover:underline">
-                {site.email}
+              <a href={`mailto:${settings.email}`} className="text-sm text-secondary underline-offset-4 hover:underline">
+                {settings.email}
               </a>
               <Link
                 href="/#contact"

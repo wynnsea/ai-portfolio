@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getNextProject, getProject, projects } from "@/lib/projects";
+import { getPublicProject, getPublicProjects, getPublicSettings } from "@/lib/public-api";
 import { Parallax } from "@/components/motion/parallax";
 import { ParallaxMedia } from "@/components/motion/parallax-media";
 import { Reveal } from "@/components/motion/reveal";
@@ -11,14 +11,11 @@ import { ContactFooter } from "@/components/contact-footer";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { ProjectExplainer } from "@/components/ai/project-explainer";
 
-// Semua halaman proyek di-prerender saat build (wajib minimal satu param saat Cache Components aktif)
-export function generateStaticParams() {
-  return projects.map((p) => ({ slug: p.slug }));
-}
+export const instant = false;
 
 export async function generateMetadata({ params }: PageProps<"/projects/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProject(slug);
+  const project = await getPublicProject(slug);
   return project ? { title: project.title, description: project.summary } : {};
 }
 
@@ -33,12 +30,17 @@ function SectionLabel({ n, children }: { n: string; children: React.ReactNode })
 // Isi halaman bergantung pada URL (`params`), jadi dirender di dalam <Suspense>.
 async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]">["params"] }) {
   const { slug } = await params;
-  const project = getProject(slug);
+  const [project, projects, settings] = await Promise.all([
+    getPublicProject(slug),
+    getPublicProjects(),
+    getPublicSettings(),
+  ]);
   if (!project) notFound();
 
+  const projectList = projects;
   const index = projects.findIndex((p) => p.slug === slug);
-  const next = getNextProject(slug);
-  const nextIndex = projects.findIndex((p) => p.slug === next.slug);
+  const next = projectList[(index + 1) % projectList.length];
+  const nextIndex = next ? projectList.findIndex((p) => p.slug === next.slug) : 0;
 
   const meta = [
     { label: "Tahun", value: project.year },
@@ -48,6 +50,7 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
   ];
 
   return (
+    <>
     <main className="bg-white">
       {/* Header */}
       <section className="relative overflow-hidden pb-16 pt-32 md:pb-24 md:pt-40">
@@ -64,7 +67,7 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
               <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> Semua proyek
             </Link>
             <span className="text-secondary">
-              Project {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+              Project {String(index + 1).padStart(2, "0")} / {String(projectList.length).padStart(2, "0")}
             </span>
           </Reveal>
 
@@ -207,7 +210,7 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
         </Reveal>
       </section>
 
-      {projects.length > 1 && (
+      {projectList.length > 1 && next && (
         <>
       {/* Proyek berikutnya */}
       <Link href={`/projects/${next.slug}`} className="group block border-t border-line">
@@ -228,6 +231,8 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
         </>
       )}
     </main>
+    <ContactFooter settings={settings} />
+    </>
   );
 }
 
@@ -237,7 +242,6 @@ export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
       <Suspense fallback={<PageSkeleton />}>
         <ProjectContent params={params} />
       </Suspense>
-      <ContactFooter />
     </>
   );
 }

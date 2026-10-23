@@ -1,9 +1,9 @@
-import { projects } from "@/lib/projects";
-import { posts } from "@/lib/posts";
+import type { Project } from "@/lib/projects";
+import type { Post } from "@/lib/posts";
 import type { SearchItem } from "@/lib/ai/types";
 
 /** Index ringan untuk pencarian ⌘K. Dibuat di server lalu dikirim ke client. */
-export function buildSearchIndex(): SearchItem[] {
+export function buildSearchIndex(projects: Project[] = [], posts: Post[] = []): SearchItem[] {
   return [
     ...projects.map<SearchItem>((p) => ({
       type: "Project",

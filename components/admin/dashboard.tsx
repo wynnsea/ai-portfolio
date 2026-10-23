@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowUpRight, Award, CalendarDays, ExternalLink, FolderKanban, Mail, Pause, PenLine, Play, Plus, Square } from "lucide-react";
-import { seed, weeklyVisitors } from "@/lib/admin/data";
 import { site } from "@/lib/site";
-import { Badge, Card, PageHeader } from "@/components/admin/ui";
+import { getDashboard, type DashboardData } from "@/lib/admin/api";
+import { Badge, Card, PageHeader, useToast } from "@/components/admin/ui";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -58,10 +58,10 @@ function StatCard({
 }
 
 /* ---------- Grafik pengunjung mingguan (pill bar) ---------- */
-function VisitorChart() {
-  const max = Math.max(...weeklyVisitors.map((d) => d.value));
+function VisitorChart({ weeklyVisitors }: { weeklyVisitors: DashboardData["weeklyVisitors"] }) {
+  const max = Math.max(1, ...weeklyVisitors.map((d) => d.value));
   const past = weeklyVisitors.filter((d) => !d.future);
-  const peak = past.reduce((a, b) => (b.value > a.value ? b : a));
+  const peak = past.reduce((a, b) => (b.value > a.value ? b : a), past[0] ?? { day: "", value: 0, future: false });
   return (
     <Card className="p-6 lg:col-span-2">
       <div className="flex items-start justify-between gap-4">
@@ -126,12 +126,13 @@ function Reminder() {
 }
 
 /* ---------- Konten terbaru ---------- */
-function LatestContent() {
-  const items = [
-    ...seed.proyek.map((p) => ({ title: p.title, type: "Proyek", year: String(p.year), icon: FolderKanban, href: "/admin/proyek" })),
-    ...seed.sertifikasi.slice(0, 3).map((c) => ({ title: c.title, type: "Sertifikasi", year: String(c.year), icon: Award, href: "/admin/sertifikasi" })),
-    ...seed.kegiatan.slice(0, 2).map((k) => ({ title: k.title, type: "Kegiatan", year: String(k.year), icon: CalendarDays, href: "/admin/kegiatan" })),
-  ].slice(0, 5);
+function LatestContent({ content }: { content: DashboardData["latestContent"] }) {
+  const items = content.map((item) => {
+    const type = item.type === "project" ? "Proyek" : item.type === "certification" ? "Sertifikasi" : item.type === "activity" ? "Kegiatan" : "Artikel";
+    const href = item.type === "project" ? "/admin/proyek" : item.type === "certification" ? "/admin/sertifikasi" : item.type === "activity" ? "/admin/kegiatan" : "/admin/artikel";
+    const icon = item.type === "project" ? FolderKanban : item.type === "certification" ? Award : item.type === "activity" ? CalendarDays : PenLine;
+    return { ...item, type, href, icon };
+  });
 
   return (
     <Card className="p-6">
@@ -168,8 +169,7 @@ function LatestContent() {
 }
 
 /* ---------- Pesan masuk ---------- */
-function Inbox() {
-  const messages = seed.pesan.slice(0, 4);
+function Inbox({ messages }: { messages: DashboardData["latestMessages"] }) {
   return (
     <Card className="p-6 lg:col-span-2">
       <div className="flex items-center justify-between">
@@ -201,14 +201,7 @@ function Inbox() {
 }
 
 /* ---------- Kelengkapan profil (semi donut) ---------- */
-function ProfileProgress() {
-  const checks = [
-    { label: "Proyek", done: seed.proyek.length > 0 },
-    { label: "Sertifikasi", done: seed.sertifikasi.length > 0 },
-    { label: "Kegiatan", done: seed.kegiatan.length > 0 },
-    { label: "CV", done: Boolean(site.cv) },
-    { label: "Artikel terbit", done: seed.artikel.some((a) => a.status === "Terbit") },
-  ];
+function ProfileProgress({ checks }: { checks: DashboardData["profileCompleteness"]["checks"] }) {
   const done = checks.filter((c) => c.done).length;
   const pct = Math.round((done / checks.length) * 100);
   const r = 80;
@@ -311,12 +304,33 @@ function FocusTimer() {
 }
 
 export function Dashboard() {
-  const unread = seed.pesan.filter((m) => m.status === "Baru").length;
+  const toast = useToast();
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [visitors, setVisitors] = useState<DashboardData["weeklyVisitors"]>([]);
+
+  useEffect(() => {
+    let active = true;
+    getDashboard()
+      .then((result) => {
+        if (active) {
+          setDashboard(result);
+          setVisitors(result.weeklyVisitors);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) toast(error instanceof Error ? error.message : "Gagal memuat dashboard.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [toast]);
+
+  const counts = dashboard?.counts;
   const stats = [
-    { label: "Total Proyek", value: seed.proyek.length, note: "Tampil di halaman portfolio", href: "/admin/proyek", icon: FolderKanban },
-    { label: "Sertifikasi", value: seed.sertifikasi.length, note: "Bahasa & teknis", href: "/admin/sertifikasi", icon: Award },
-    { label: "Kegiatan", value: seed.kegiatan.length, note: "Galeri kegiatan", href: "/admin/kegiatan", icon: CalendarDays },
-    { label: "Pesan", value: seed.pesan.length, note: unread ? `${unread} belum dibaca` : "Semua sudah dibaca", href: "/admin/pesan", icon: Mail },
+    { label: "Total Proyek", value: counts?.projects ?? 0, note: "Tampil di halaman portfolio", href: "/admin/proyek", icon: FolderKanban },
+    { label: "Sertifikasi", value: counts?.certifications ?? 0, note: "Bahasa & teknis", href: "/admin/sertifikasi", icon: Award },
+    { label: "Kegiatan", value: counts?.activities ?? 0, note: "Galeri kegiatan", href: "/admin/kegiatan", icon: CalendarDays },
+    { label: "Pesan", value: counts?.messages ?? 0, note: counts?.unreadMessages ? `${counts.unreadMessages} belum dibaca` : "Semua sudah dibaca", href: "/admin/pesan", icon: Mail },
   ];
 
   return (
@@ -351,11 +365,11 @@ export function Dashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <VisitorChart />
+        <VisitorChart weeklyVisitors={visitors} />
         <Reminder />
-        <Inbox />
-        <LatestContent />
-        <ProfileProgress />
+        <Inbox messages={dashboard?.latestMessages ?? []} />
+        <LatestContent content={dashboard?.latestContent ?? []} />
+        <ProfileProgress checks={dashboard?.profileCompleteness.checks ?? []} />
         <div className="lg:col-span-2">
           <FocusTimer />
         </div>
@@ -363,4 +377,3 @@ export function Dashboard() {
     </div>
   );
 }
-

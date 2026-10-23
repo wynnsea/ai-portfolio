@@ -66,7 +66,7 @@ function ActivityLightbox({ activity, index, onClose }: { activity: Activity; in
           {photos.length ? (
             <AnimatePresence mode="wait">
               <motion.div key={slide} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="absolute inset-0">
-                <Image src={photos[slide]} alt={`${activity.title}, foto ${slide + 1}`} fill sizes="(min-width: 1024px) 900px, 95vw" className="object-contain" />
+                <Image src={photos[slide]} alt={`${activity.title}, foto ${slide + 1}`} fill sizes="(min-width: 1024px) 900px, 95vw" unoptimized className="object-contain" />
               </motion.div>
             </AnimatePresence>
           ) : (
@@ -139,6 +139,7 @@ export function ActivityCard({ activity, index }: { activity: Activity; index: n
                   alt=""
                   fill
                   sizes="(min-width: 1024px) 30vw, 45vw"
+                  unoptimized
                   style={activity.focus ? { objectPosition: activity.focus } : undefined}
                   className="object-cover grayscale transition-[filter,scale] duration-[1200ms] ease-expo group-hover:scale-[1.05] group-hover:grayscale-0"
                 />

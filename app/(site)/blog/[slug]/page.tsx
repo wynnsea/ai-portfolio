@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatDate, getPost, posts, sortedPosts, type PostBlock } from "@/lib/posts";
-import { site } from "@/lib/site";
+import { formatDate, type PostBlock } from "@/lib/posts";
+import { getPublicPost, getPublicPosts, getPublicSettings } from "@/lib/public-api";
 import { Parallax } from "@/components/motion/parallax";
 import { ParallaxMedia } from "@/components/motion/parallax-media";
 import { Reveal } from "@/components/motion/reveal";
@@ -13,15 +13,11 @@ import { ContactFooter } from "@/components/contact-footer";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { TldrBox } from "@/components/ai/tldr-box";
 
-// Semua artikel di-prerender saat build
-export function generateStaticParams() {
-  // Cache Components butuh minimal satu param; saat belum ada artikel pakai placeholder (berujung 404)
-  return posts.length ? posts.map((p) => ({ slug: p.slug })) : [{ slug: "__belum-ada-artikel__" }];
-}
+export const instant = false;
 
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPublicPost(slug);
   return post ? { title: post.title, description: post.excerpt } : {};
 }
 
@@ -60,13 +56,18 @@ function Block({ block }: { block: PostBlock }) {
 // Isi halaman bergantung pada URL (`params`), jadi dirender di dalam <Suspense>.
 async function PostContent({ params }: { params: PageProps<"/blog/[slug]">["params"] }) {
   const { slug } = await params;
-  const post = getPost(slug);
+  const [post, posts, settings] = await Promise.all([
+    getPublicPost(slug),
+    getPublicPosts(),
+    getPublicSettings(),
+  ]);
   if (!post) notFound();
 
-  const index = sortedPosts.findIndex((p) => p.slug === slug);
-  const more = sortedPosts.filter((p) => p.slug !== slug).slice(0, 2);
+  const index = posts.findIndex((p) => p.slug === slug);
+  const more = posts.filter((p) => p.slug !== slug).slice(0, 2);
 
   return (
+    <>
     <main className="bg-white">
       {/* Header artikel */}
       <section className="relative overflow-hidden pb-14 pt-32 md:pb-20 md:pt-40">
@@ -92,7 +93,7 @@ async function PostContent({ params }: { params: PageProps<"/blog/[slug]">["para
 
           <Reveal delay={0.2} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line pt-6 text-sm">
             <span>
-              by <span className="font-medium">{site.name}</span>
+              by <span className="font-medium">{settings.name}</span>
             </span>
             <time dateTime={post.date} className="text-secondary">
               {formatDate(post.date)}
@@ -139,7 +140,7 @@ async function PostContent({ params }: { params: PageProps<"/blog/[slug]">["para
                   <Link href={`/blog/${p.slug}`} className="group block">
                     <div className="overflow-hidden">
                       <div className="transition-transform duration-[1200ms] ease-expo group-hover:scale-105">
-                        <ProjectCover project={p} index={sortedPosts.indexOf(p)} className="aspect-[16/10] w-full" sizes="(min-width: 768px) 45vw, 90vw" />
+                        <ProjectCover project={p} index={posts.indexOf(p)} className="aspect-[16/10] w-full" sizes="(min-width: 768px) 45vw, 90vw" />
                       </div>
                     </div>
                     <p className="mt-5 text-xs text-secondary">
@@ -154,6 +155,8 @@ async function PostContent({ params }: { params: PageProps<"/blog/[slug]">["para
         </div>
       </section>
     </main>
+    <ContactFooter settings={settings} />
+    </>
   );
 }
 
@@ -164,7 +167,6 @@ export default function BlogPostPage({ params }: PageProps<"/blog/[slug]">) {
       <Suspense fallback={<PageSkeleton />}>
         <PostContent params={params} />
       </Suspense>
-      <ContactFooter />
     </>
   );
 }

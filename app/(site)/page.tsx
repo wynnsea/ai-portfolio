@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Hero } from "@/components/hero";
 import { Statement } from "@/components/statement";
 import { AboutSection } from "@/components/about-section";
@@ -7,21 +8,39 @@ import { ActivitiesSection } from "@/components/activities/activities-section";
 import { BlogSection } from "@/components/blog/blog-section";
 import { JobMatchSection } from "@/components/ai/job-match-section";
 import { ContactFooter } from "@/components/contact-footer";
+import { PageSkeleton } from "@/components/page-skeleton";
+import { getPublicActivities, getPublicCertifications, getPublicPosts, getPublicProjects, getPublicSettings } from "@/lib/public-api";
 
-export default function Home() {
+async function HomeContent() {
+  const [projects, certifications, activities, posts, settings] = await Promise.all([
+    getPublicProjects(),
+    getPublicCertifications(),
+    getPublicActivities(),
+    getPublicPosts(),
+    getPublicSettings(),
+  ]);
+
   return (
     <>
       <main>
-        <Hero />
+        <Hero settings={settings} projectCount={projects.length} certificationCount={certifications.length} />
         <Statement />
         <AboutSection />
-        <ProjectsSection />
-        <CertificationsSection />
-        <ActivitiesSection />
-        <BlogSection />
+        <ProjectsSection projects={projects} />
+        <CertificationsSection certifications={certifications} />
+        <ActivitiesSection activities={activities} />
+        <BlogSection posts={posts} />
         <JobMatchSection />
       </main>
-      <ContactFooter />
+      <ContactFooter settings={settings} />
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <HomeContent />
+    </Suspense>
   );
 }

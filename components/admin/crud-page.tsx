@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, Inbox, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import type { Resource, Row } from "@/lib/admin/data";
-import { deleteRow, initialRows, saveRow } from "@/lib/admin/api";
+import { ApiError, deleteRow, getRow, listRows, saveRow } from "@/lib/admin/api";
 import { Badge, Button, Field, Input, Modal, PageHeader, Select, Textarea, useToast } from "@/components/admin/ui";
 
 export type FieldDef = {
@@ -51,34 +51,61 @@ export function CrudPage({
   singular,
   columns,
   fields,
-  searchKeys,
   filter,
   allowCreate = true,
   allowEdit = true,
   titleKey = "title",
 }: CrudPageProps) {
   const toast = useToast();
-  const [rows, setRows] = useState<Row[]>(() => initialRows(resource));
+  const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("Semua");
   const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [reload, setReload] = useState(0);
   const [mode, setMode] = useState<Mode>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return rows.filter((r) => {
-      const matchQuery = !q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q));
-      const matchFilter = !filter || filterValue === "Semua" || r[filter.key] === filterValue;
-      return matchQuery && matchFilter;
-    });
-  }, [rows, query, filterValue, searchKeys, filter]);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSearch(query), 300);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  useEffect(() => {
+    let active = true;
+    listRows(resource, {
+      page,
+      perPage: PAGE_SIZE,
+      search,
+      filterKey: filter?.key,
+      filterValue,
+    })
+      .then((result) => {
+        if (!active) return;
+        setRows(result.rows);
+        setTotal(result.total);
+        setPages(Math.max(1, result.lastPage));
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setRows([]);
+          setTotal(0);
+          setPages(1);
+          toast(error instanceof Error ? error.message : "Gagal memuat data.");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [resource, page, search, filter?.key, filterValue, reload, toast]);
+
   const current = Math.min(page, pages);
-  const visible = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const visible = rows;
 
   const close = () => {
     setMode(null);
@@ -102,22 +129,52 @@ export function CrudPage({
 
     setBusy(true);
     const isEdit = mode?.type === "edit";
-    const id = isEdit ? mode.row.id : Math.max(0, ...rows.map((r) => r.id)) + 1;
-    const saved = await saveRow(resource, { ...(isEdit ? mode.row : {}), ...form, id } as Row);
-    setRows((rs) => (isEdit ? rs.map((r) => (r.id === id ? saved : r)) : [saved, ...rs]));
-    setBusy(false);
-    close();
-    toast(isEdit ? `${singular} berhasil diperbarui` : `${singular} berhasil ditambahkan`);
+    const payload =
+      resource === "pesan"
+        ? { status: form.status }
+        : Object.fromEntries(fields.map((field) => [field.name, form[field.name] ?? ""]));
+    try {
+      await saveRow(resource, payload, isEdit ? mode.row.id : undefined);
+      setBusy(false);
+      close();
+      if (!isEdit) setPage(1);
+      setReload((value) => value + 1);
+      toast(isEdit ? `${singular} berhasil diperbarui` : `${singular} berhasil ditambahkan`);
+    } catch (error) {
+      setBusy(false);
+      if (error instanceof ApiError && Object.keys(error.errors).length) {
+        setErrors(Object.fromEntries(Object.entries(error.errors).map(([key, messages]) => [key, messages[0]])));
+      } else {
+        toast(error instanceof Error ? error.message : `Gagal menyimpan ${singular.toLowerCase()}.`);
+      }
+    }
   };
 
   const remove = async () => {
     if (mode?.type !== "delete") return;
     setBusy(true);
-    await deleteRow(resource, mode.row.id);
-    setRows((rs) => rs.filter((r) => r.id !== mode.row.id));
-    setBusy(false);
-    close();
-    toast(`${singular} berhasil dihapus`);
+    try {
+      await deleteRow(resource, mode.row.id);
+      setBusy(false);
+      close();
+      if (rows.length === 1 && page > 1) setPage(page - 1);
+      else setReload((value) => value + 1);
+      toast(`${singular} berhasil dihapus`);
+    } catch (error) {
+      setBusy(false);
+      toast(error instanceof Error ? error.message : `Gagal menghapus ${singular.toLowerCase()}.`);
+    }
+  };
+
+  const showDetails = async (row: Row) => {
+    setMode({ type: "show", row });
+    try {
+      const detail = await getRow(resource, row.id);
+      setMode({ type: "show", row: detail });
+      setRows((items) => items.map((item) => (item.id === detail.id ? detail : item)));
+    } catch (error) {
+      toast(error instanceof Error ? error.message : `Gagal memuat detail ${singular.toLowerCase()}.`);
+    }
   };
 
   const cell = (row: Row, col: ColumnDef) => {
@@ -135,7 +192,7 @@ export function CrudPage({
 
   const actions = (row: Row) => (
     <div className="flex justify-end gap-1">
-      <IconButton label="Lihat detail" onClick={() => setMode({ type: "show", row })}>
+      <IconButton label="Lihat detail" onClick={() => void showDetails(row)}>
         <Eye className="size-4" />
       </IconButton>
       {allowEdit && (
@@ -192,7 +249,7 @@ export function CrudPage({
           </div>
         )}
         <p className="text-xs text-ad-muted sm:ml-auto">
-          {filtered.length} dari {rows.length} data
+          {rows.length} dari {total} data
         </p>
       </div>
 

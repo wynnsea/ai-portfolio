@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate, sortedPosts } from "@/lib/posts";
+import { formatDate, type Post } from "@/lib/posts";
 import { Parallax } from "@/components/motion/parallax";
 import { ParallaxMedia } from "@/components/motion/parallax-media";
 import { Reveal } from "@/components/motion/reveal";
@@ -8,8 +8,8 @@ import { BlogList } from "@/components/blog/blog-list";
 import { Wave } from "@/components/wave";
 import { EmptyState } from "@/components/empty-state";
 
-export function BlogSection() {
-  const [featured, ...rest] = sortedPosts;
+export function BlogSection({ posts }: { posts: Post[] }) {
+  const [featured, ...rest] = posts;
 
   return (
     <section id="blog" className="relative overflow-hidden bg-tertiary py-28 md:py-40">
@@ -28,7 +28,7 @@ export function BlogSection() {
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">
-            Blog<sup className="ml-2 align-top text-lg font-normal tracking-normal text-secondary md:text-2xl">({String(sortedPosts.length).padStart(2, "0")})</sup>
+            Blog<sup className="ml-2 align-top text-lg font-normal tracking-normal text-secondary md:text-2xl">({String(posts.length).padStart(2, "0")})</sup>
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
             Catatan soal integrasi AI ke produk nyata, cerita perjalanan karier, dan sedikit budaya Jepang di sela-selanya.

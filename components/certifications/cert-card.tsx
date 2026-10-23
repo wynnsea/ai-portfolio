@@ -60,6 +60,7 @@ function Lightbox({ cert, onClose }: { cert: Certification; onClose: () => void 
             width={1400}
             height={1400}
             sizes="(min-width: 1024px) 900px, 95vw"
+            unoptimized
             className="mx-auto h-auto max-h-[70svh] w-auto object-contain p-3 md:p-6"
           />
         </div>
@@ -115,7 +116,7 @@ export function CertCard({ cert, index }: { cert: Certification; index: number }
               // Sertifikat asli: berwarna & utuh (tidak dipotong) di atas bingkai putih
               <div className="relative aspect-[4/5] bg-white p-3 md:p-4">
                 <div className="relative h-full w-full transition-transform duration-[1200ms] ease-expo group-hover:scale-[1.04]">
-                  <Image src={cert.cover} alt="" fill sizes="(min-width: 1024px) 22vw, 45vw" className="object-contain" />
+                  <Image src={cert.cover} alt="" fill sizes="(min-width: 1024px) 22vw, 45vw" unoptimized className="object-contain" />
                 </div>
               </div>
             ) : (

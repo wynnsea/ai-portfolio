@@ -24,7 +24,7 @@ export function LoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await login(email, password);
+    const res = await login(email, password, remember);
     if (!res.ok) {
       setLoading(false);
       setError(res.message ?? "Login gagal");
@@ -128,7 +128,7 @@ export function LoginForm() {
         </form>
 
         <p className="mt-6 rounded-2xl bg-ad-soft/70 px-4 py-3 text-[11px] leading-relaxed text-ad-muted">
-          Demo UI: belum tersambung ke Laravel. Isi email apa saja dan password minimal 6 karakter.
+          Gunakan email dan password admin yang dikonfigurasi di backend.
         </p>
 
         <Link href="/" className="mt-5 inline-flex items-center gap-1.5 text-xs text-ad-muted transition hover:text-ad-deep">

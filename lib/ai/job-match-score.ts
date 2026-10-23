@@ -1,7 +1,8 @@
 import { skillProfile, type SkillLevel } from "@/lib/ai/skill-profile";
 import type { Extraction } from "@/lib/ai/job-match";
 import { JobMatchResult } from "./types";
-import { getProject } from "../projects";
+import type { Project } from "../projects";
+import { projects as defaultProjects } from "../projects";
 import { site } from "../site";
 
 type Requirement = Extraction["requirements"][number];
@@ -85,12 +86,17 @@ export function scoreJob(ex: Extraction): ScoreResult {
 }
 
 /** Ubah hasil skoring menjadi format yang dibaca UI. */
-export function buildJobMatchResult(ex: Extraction, s: ScoreResult): JobMatchResult {
+export function buildJobMatchResult(
+  ex: Extraction,
+  s: ScoreResult,
+  projectList: Project[] = defaultProjects,
+  name: string = site.name,
+): JobMatchResult {
   // Kumpulkan project bukti dari semua skill yang cocok, tanpa duplikat
   const slugs = [...new Set(s.matched.flatMap((m) => m.evidence))];
 
   const projects = slugs.slice(0, 3).flatMap((slug) => {
-    const p = getProject(slug);
+    const p = projectList.find((project) => project.slug === slug);
     if (!p) return [];
     const lewat = s.matched.filter((m) => m.evidence.includes(slug)).map((m) => m.label);
     return [{ slug, title: p.title, reason: `Bukti: ${lewat.join(", ")}` }];
@@ -105,10 +111,10 @@ export function buildJobMatchResult(ex: Extraction, s: ScoreResult): JobMatchRes
   // Pilihan B: kalau datanya terlalu sedikit, skor tidak dikirim dan ringkasan tidak memberi penilaian,
   // supaya skor palsu (misalnya dari prompt injection) tidak bocor lewat angka maupun teks.
   const summary = s.outOfField
-    ? `Posisi ${ex.position || "ini"} kayaknya di luar bidang ${site.name} (AI dan pengembangan perangkat lunak), jadi gak dinilai pakai skor.`
+    ? `Posisi ${ex.position || "ini"} kayaknya di luar bidang ${name} (AI dan pengembangan perangkat lunak), jadi gak dinilai pakai skor.`
     : s.lowConfidence
       ? `Syarat yang kebaca dari lowongan ini terlalu sedikit buat dinilai akurat. Coba tempel deskripsi lowongan yang lebih lengkap ya.`
-      : `${verdict} buat posisi ${ex.position || "ini"}. ${site.name} memenuhi ${s.matched.length} dari ${totalSyarat} syarat yang kebaca.${gap}`;
+      : `${verdict} buat posisi ${ex.position || "ini"}. ${name} memenuhi ${s.matched.length} dari ${totalSyarat} syarat yang kebaca.${gap}`;
 
   // Lowongan yang tidak dinilai (beda bidang / kurang data) hanya dapat pesan:
   // tanpa skor, tanpa skill cocok, tanpa gap, tanpa project bukti.

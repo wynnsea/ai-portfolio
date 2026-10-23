@@ -2,10 +2,11 @@
 // Saat integrasi beneran, ganti isi fungsi-fungsi ini dengan panggilan LLM
 // (dari API route) dan kirim data profil/project sebagai konteks.
 import { about, site } from "@/lib/site";
-import { getProject, projects } from "@/lib/projects";
-import { getPost, sortedPosts } from "@/lib/posts";
-import { certifications } from "@/lib/certifications";
-import { activities } from "@/lib/activities";
+import { getProject, projects, type Project } from "@/lib/projects";
+import { getPost, sortedPosts, type Post } from "@/lib/posts";
+import { certifications as defaultCertifications } from "@/lib/certifications";
+import { activities as defaultActivities } from "@/lib/activities";
+import type { SiteSettings } from "@/lib/public-api";
 import type { ExplainLevel, JobMatchResult, SeaReply } from "@/lib/ai/types";
 
 /** Jeda buatan supaya terasa seperti menunggu respons model. */
@@ -14,24 +15,38 @@ export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const has = (text: string, words: string[]) => words.some((w) => text.includes(w));
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /** Data project ditulis dengan "saya"; SEA AI membicarakan Wayan sebagai orang ketiga. */
-const thirdPerson = (s: string) => s.replace(/\bsaya\b/gi, site.name);
+const thirdPerson = (s: string, name: string = site.name) => s.replace(/\bsaya\b/gi, name);
 
 // ---------------------------------------------------------------------------
 // SEA AI chat
 // ---------------------------------------------------------------------------
 
-export function mockSeaReply(message: string): SeaReply {
+export function mockSeaReply(
+  message: string,
+  content: {
+    projects?: Project[];
+    posts?: Post[];
+    certifications?: typeof defaultCertifications;
+    activities?: typeof defaultActivities;
+    settings?: SiteSettings;
+  } = {},
+): SeaReply {
   const q = message.toLowerCase();
-  const name = site.name;
+  const name = content.settings?.name ?? site.name;
+  const profile = content.settings ?? site;
+  const projectList = content.projects ?? projects;
+  const postList = content.posts ?? sortedPosts;
+  const certificationList = content.certifications ?? defaultCertifications;
+  const activityList = content.activities ?? defaultActivities;
 
   // Cocok kalau pertanyaan menyebut judul lengkap, slug, atau kata pertama judul (mis. "minori")
-  const project = projects.find((p) => {
+  const project = projectList.find((p) => {
     const first = p.title.split(" ")[0].toLowerCase();
     return q.includes(p.title.toLowerCase()) || q.includes(p.slug.replaceAll("-", " ")) || (first.length > 3 && q.includes(first));
   });
   if (project) {
     return {
-      reply: `${project.title} itu ${thirdPerson(lowerFirst(project.summary))} Di project ini ${name} jadi ${project.role} selama ${project.duration}, pakai ${project.stack.slice(0, 3).join(", ")}, dan lain-lain.`,
+      reply: `${project.title} itu ${thirdPerson(lowerFirst(project.summary), name)} Di project ini ${name} jadi ${project.role} selama ${project.duration}, pakai ${project.stack.slice(0, 3).join(", ")}, dan lain-lain.`,
       action: { type: "navigate", href: `/projects/${project.slug}`, label: `Buka ${project.title}` },
     };
   }
@@ -44,25 +59,25 @@ export function mockSeaReply(message: string): SeaReply {
   }
 
   if (has(q, ["project", "proyek", "portfolio", "portofolio", "karya", "bikin apa"])) {
-    const list = projects.map((p) => p.title).join(", ");
+    const list = projectList.map((p) => p.title).join(", ");
     return {
-      reply: `${name} udah ngerjain ${projects.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
+      reply: `${name} udah ngerjain ${projectList.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
       action: { type: "navigate", href: "/#projects", label: "Lihat semua proyek" },
     };
   }
 
   if (has(q, ["kegiatan", "organisasi", "fasilitator", "panitia", "volunteer", "relawan", "pemateri", "lomba", "aktivitas", "activit"])) {
-    const roles = [...new Set(activities.map((a) => a.role.toLowerCase()))].slice(0, 4).join(", ");
+    const roles = [...new Set(activityList.map((a) => a.role.toLowerCase()))].slice(0, 4).join(", ");
     return {
-      reply: `Di luar kerjaan, ${name} aktif di ${activities.length} kegiatan, misalnya jadi ${roles}. Salah satunya ${activities[0].title} sebagai ${activities[0].role.toLowerCase()}.`,
+      reply: `Di luar kerjaan, ${name} aktif di ${activityList.length} kegiatan${activityList.length ? `, misalnya jadi ${roles}. Salah satunya ${activityList[0].title} sebagai ${activityList[0].role.toLowerCase()}.` : "."}`,
       action: { type: "navigate", href: "/#activities", label: "Lihat kegiatan" },
     };
   }
 
   if (has(q, ["sertifikat", "sertifikasi", "certif", "toefl", "itep", "jlpt", "bahasa inggris", "english"])) {
-    const list = certifications.map((c) => c.title).join(", ");
+    const list = certificationList.map((c) => c.title).join(", ");
     return {
-      reply: `${name} punya ${certifications.length} sertifikasi: ${list}. Ada sertifikat bahasa Inggris (TOEFL & iTEP), bahasa Jepang (JLPT N4), dan kompetensi Junior Web Developer.`,
+      reply: `${name} punya ${certificationList.length} sertifikasi${list ? `: ${list}` : ""}.`,
       action: { type: "navigate", href: "/#certifications", label: "Lihat sertifikasi" },
     };
   }
@@ -77,7 +92,7 @@ export function mockSeaReply(message: string): SeaReply {
 
   if (has(q, ["kontak", "contact", "email", "hubungi", "linkedin", "github", "ngobrol"])) {
     return {
-      reply: `Paling gampang lewat email ke ${site.email}. Bisa juga cek GitHub (github.com/wynnsea) atau LinkedIn-nya. ${name} biasanya fast response kok.`,
+      reply: `Paling gampang lewat email ke ${profile.email}. Bisa juga cek GitHub (github.com/wynnsea) atau LinkedIn-nya. ${name} biasanya fast response kok.`,
       action: { type: "navigate", href: "/#contact", label: "Ke bagian kontak" },
     };
   }
@@ -106,7 +121,7 @@ export function mockSeaReply(message: string): SeaReply {
   }
 
   if (has(q, ["blog", "artikel", "tulisan", "nulis"])) {
-    const latest = sortedPosts[0];
+    const latest = postList[0];
     if (!latest) {
       return { reply: `${name} belum nerbitin artikel nih. Tulisan pertamanya lagi disiapin, ditunggu ya!` };
     }
@@ -160,7 +175,7 @@ const SKILLS: { label: string; patterns: string[]; owned: boolean }[] = [
 const matchesSkill = (text: string, patterns: string[]) =>
   patterns.some((p) => new RegExp(`(^|[^a-z])${p}`, "i").test(text));
 
-export function mockJobMatch(jd: string): JobMatchResult {
+export function mockJobMatch(jd: string, projectList: Project[] = projects, name: string = site.name): JobMatchResult {
   const text = jd.toLowerCase();
   const found = SKILLS.filter((s) => matchesSkill(text, s.patterns));
   const matched = found.filter((s) => s.owned).map((s) => s.label);
@@ -171,7 +186,7 @@ export function mockJobMatch(jd: string): JobMatchResult {
   const confidence = Math.min(1, found.length / 5);
   const score = Math.round(Math.min(96, Math.max(30, 50 + (raw * 100 - 50) * confidence - missing.length * 2)));
 
-  const ranked = projects
+  const ranked = projectList
     .map((p) => {
       const hay = `${p.category} ${p.stack.join(" ")} ${p.summary}`.toLowerCase();
       const hits = found.filter((s) => matchesSkill(hay, s.patterns)).map((s) => s.label);
@@ -186,7 +201,7 @@ export function mockJobMatch(jd: string): JobMatchResult {
   return {
     score,
     summary: found.length
-      ? `${verdict}${unsure}! ${site.name} udah punya ${matched.length} dari ${found.length} skill yang disebut di lowongan ini. ${
+      ? `${verdict}${unsure}! ${name} udah punya ${matched.length} dari ${found.length} skill yang disebut di lowongan ini. ${
           missing.length ? `Yang masih perlu dikejar: ${missing.join(", ")}.` : "Gak ada skill yang kelewat."
         } Fokusnya di integrasi AI juga pas buat posisi yang banyak nyambungin LLM ke produk.`
       : "Saya gak nemu skill teknis spesifik di teks ini. Coba tempel deskripsi lowongan yang lebih lengkap biar analisisnya lebih akurat.",
@@ -205,19 +220,22 @@ export function mockJobMatch(jd: string): JobMatchResult {
 // Penjelas project per level
 // ---------------------------------------------------------------------------
 
-export function mockExplain(slug: string, level: ExplainLevel): string | null {
-  const p = getProject(slug);
+export function mockExplain(
+  slug: string,
+  level: ExplainLevel,
+  p = getProject(slug),
+  name: string = site.name,
+): string | null {
   if (!p) return null;
-  const name = site.name;
-  const summary = thirdPerson(p.summary);
+  const summary = thirdPerson(p.summary, name);
   const results = p.results.map((r) => `${r.label.toLowerCase()} ${r.value}`).join(", ");
 
   if (level === "recruiter") {
     return `Singkatnya, ${p.title} adalah ${lowerFirst(summary)} ${name} pegang peran ${p.role} selama ${p.duration}. Hasil yang kelihatan: ${results}. Skill yang kepake di sini: ${p.stack.slice(0, 4).join(", ")}. Ini nunjukin dia bisa bawa AI dari ide sampai jadi produk yang dipakai orang.`;
   }
   if (level === "engineer") {
-    const steps = p.approach.map((a, i) => `(${i + 1}) ${lowerFirst(thirdPerson(a)).replace(/\.$/, "")}`).join("; ");
-    return `Stack: ${p.stack.join(", ")}. Masalah utamanya: ${lowerFirst(thirdPerson(p.challenge))} Pendekatannya: ${steps}. Metrik akhirnya ${results}.`;
+    const steps = p.approach.map((a, i) => `(${i + 1}) ${lowerFirst(thirdPerson(a, name)).replace(/\.$/, "")}`).join("; ");
+    return `Stack: ${p.stack.join(", ")}. Masalah utamanya: ${lowerFirst(thirdPerson(p.challenge, name))} Pendekatannya: ${steps}. Metrik akhirnya ${results}.`;
   }
   return `Bayangin kamu punya temen yang pinter banget tapi kadang suka asal jawab. ${p.title} itu caranya ${name} ngarahin temen pinter itu (AI) biar jawabannya bener dan berguna. Hasilnya? ${summary} Jadi ${name} gak bikin otak AI-nya dari nol, tapi bikin AI yang udah ada jadi gampang dan aman dipakai siapa aja.`;
 }
@@ -226,8 +244,7 @@ export function mockExplain(slug: string, level: ExplainLevel): string | null {
 // TL;DR artikel
 // ---------------------------------------------------------------------------
 
-export function mockTldr(slug: string): string[] | null {
-  const post = getPost(slug);
+export function mockTldr(slug: string, post = getPost(slug)): string[] | null {
   if (!post) return null;
   const headings = post.content.flatMap((b) => (b.type === "h2" ? [b.text.replace(/^\d+\.\s*/, "")] : []));
   const quote = post.content.find((b) => b.type === "quote");

@@ -397,14 +397,15 @@ Pesan & artikel **tidak** perlu di-seed (data di panel admin saat ini hanya cont
 
 ---
 
-## 8. Yang akan dilakukan frontend setelah API siap
+## 8. Integrasi frontend
 
-Supaya backend tahu ekspektasinya:
-1. `lib/admin/api.ts` diganti dari mock ke `fetch(NEXT_PUBLIC_API_URL + ...)`, token disimpan setelah login.
-2. Halaman `/admin/*` diproteksi (redirect ke `/admin/login` jika `GET /api/admin/me` → 401).
-3. Website membaca `GET /api/projects`, `/api/posts`, dst. menggantikan file di `lib/*.ts`.
-4. Form admin diperluas untuk field yang belum ada (cover, foto, approach, results, content blok).
-5. Form kontak publik dibuat dan dikirim ke `POST /api/messages`.
+Panel admin memakai `NEXT_PUBLIC_API_URL` (contoh lokal: `http://localhost:8000/api`) untuk:
+- Login Sanctum, penyimpanan token, validasi sesi melalui `/api/admin/me`, dan logout.
+- CRUD admin untuk proyek, sertifikasi, kegiatan, artikel, dan pesan; termasuk pencarian dan paginasi.
+- Dashboard, pengaturan profil/website, ubah password, dan upload foto profil.
+
+Integrasi data publik website (`GET /api/projects`, `/api/posts`, dan endpoint lain), perluasan form
+admin untuk field konten lanjutan, serta form kontak publik masih menjadi pekerjaan berikutnya.
 
 ## 9. Checklist backend
 

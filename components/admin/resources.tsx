@@ -88,7 +88,7 @@ export function ArtikelTable() {
     <CrudPage
       resource="artikel"
       title="Artikel"
-      description="Tulis dan kelola artikel blog. Data di bawah masih contoh."
+      description="Tulis dan kelola artikel blog."
       singular="Artikel"
       searchKeys={["title", "category", "excerpt"]}
       filter={{ key: "status", label: "Filter status", options: ["Draft", "Terbit", "Arsip"] }}
@@ -115,7 +115,7 @@ export function PesanTable() {
     <CrudPage
       resource="pesan"
       title="Pesan"
-      description="Pesan masuk dari form kontak website. Data di bawah masih contoh."
+      description="Pesan masuk dari form kontak website."
       singular="Pesan"
       allowCreate={false}
       titleKey="subject"

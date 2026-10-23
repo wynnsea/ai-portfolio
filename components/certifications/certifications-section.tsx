@@ -1,11 +1,11 @@
-import { certifications } from "@/lib/certifications";
+import type { Certification } from "@/lib/certifications";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { CertCard } from "@/components/certifications/cert-card";
 import { Wave } from "@/components/wave";
 import { EmptyState } from "@/components/empty-state";
 
-export function CertificationsSection() {
+export function CertificationsSection({ certifications }: { certifications: Certification[] }) {
   return (
     <section id="certifications" className="relative overflow-hidden bg-tertiary py-28 md:py-40">
       <Wave from="white" />

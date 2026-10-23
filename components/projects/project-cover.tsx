@@ -31,7 +31,7 @@ export function ProjectCover({ project, index, variant = index, className = "", 
   if (project.cover) {
     return (
       <div className={`relative overflow-hidden ${className}`}>
-        <Image src={project.cover} alt={project.title} fill sizes={sizes} priority={priority} className="object-cover grayscale" />
+        <Image src={project.cover} alt={project.title} fill sizes={sizes} priority={priority} unoptimized className="object-cover grayscale" />
       </div>
     );
   }

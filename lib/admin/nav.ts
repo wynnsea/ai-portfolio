@@ -10,11 +10,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
-import { seed } from "@/lib/admin/data";
-
 export type NavItem = { label: string; href: string; icon: LucideIcon; badge?: number };
-
-const unread = seed.pesan.filter((m) => m.status === "Baru").length;
 
 export const adminNav: { title: string; items: NavItem[] }[] = [
   {
@@ -25,7 +21,7 @@ export const adminNav: { title: string; items: NavItem[] }[] = [
       { label: "Sertifikasi", href: "/admin/sertifikasi", icon: Award },
       { label: "Kegiatan", href: "/admin/kegiatan", icon: CalendarDays },
       { label: "Artikel", href: "/admin/artikel", icon: FileText },
-      { label: "Pesan", href: "/admin/pesan", icon: Mail, badge: unread || undefined },
+      { label: "Pesan", href: "/admin/pesan", icon: Mail },
     ],
   },
   {

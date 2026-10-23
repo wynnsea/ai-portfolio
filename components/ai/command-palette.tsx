@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import type { SearchItem } from "@/lib/ai/types";
 import { DemoBadge } from "@/components/ai/typewriter";
+import { getPublicPosts, getPublicProjects } from "@/lib/public-api";
+import { buildSearchIndex } from "@/lib/ai/search-index";
 
 // DEMO: pencarian kata kunci + sinonim sederhana, meniru pencarian semantik.
 // Versi asli: embed query & dokumen pakai API embeddings lalu urutkan berdasarkan kemiripan.
@@ -57,6 +59,7 @@ function score(item: SearchItem, query: string) {
 
 /** Pencarian ⌘K / Ctrl+K untuk project, artikel, dan section. */
 export function CommandPalette({ items }: { items: SearchItem[] }) {
+  const [searchItems, setSearchItems] = useState(items);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -65,15 +68,29 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
   const pathname = usePathname();
   const lenis = useLenis();
 
+  useEffect(() => {
+    let active = true;
+    Promise.all([getPublicProjects(), getPublicPosts()])
+      .then(([projects, posts]) => {
+        if (active) setSearchItems(buildSearchIndex(projects, posts));
+      })
+      .catch((error: unknown) => {
+        console.error("Gagal memuat indeks pencarian portfolio dari API.", error);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const results = useMemo(() => {
-    if (!query.trim()) return items.filter((i) => i.type !== "Blog").slice(0, 6);
-    return items
+    if (!query.trim()) return searchItems.filter((i) => i.type !== "Blog").slice(0, 6);
+    return searchItems
       .map((item) => ({ item, s: score(item, query) }))
       .filter((r) => r.s > 0)
       .sort((a, b) => b.s - a.s)
       .slice(0, 8)
       .map((r) => r.item);
-  }, [items, query]);
+  }, [searchItems, query]);
 
   const close = () => {
     setOpen(false);
