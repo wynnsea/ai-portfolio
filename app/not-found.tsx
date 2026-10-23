@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { NotFoundActions } from "@/components/not-found-actions";
+import { SiteChrome } from "@/components/site-chrome";
 
 export const metadata: Metadata = {
   title: "Halaman tidak ditemukan",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
+    <SiteChrome>
     <main className="relative flex min-h-svh items-center overflow-hidden bg-white pb-24 pt-32">
       {/* Kanji 迷 ("tersesat") di latar belakang */}
       <Parallax
@@ -44,5 +46,6 @@ export default function NotFound() {
         </Reveal>
       </div>
     </main>
+    </SiteChrome>
   );
 }

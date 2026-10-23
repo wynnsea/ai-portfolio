@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
-import { SmoothScroll } from "@/components/providers/smooth-scroll";
-import { IntroProvider, introScript } from "@/components/providers/intro-provider";
-import { Navbar } from "@/components/navbar";
-import { ChatLauncher } from "@/components/chat-launcher";
-import { CommandPalette } from "@/components/ai/command-palette";
-import { buildSearchIndex } from "@/lib/ai/search-index";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -34,22 +28,12 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
+// Layout root: hanya <html>, font, dan metadata. Dipakai bersama oleh website (site) dan admin.
+// Elemen khas website (preloader, navbar, SEA AI) ada di app/(site)/layout.tsx.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" data-intro="playing" className={`${interTight.variable} antialiased`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: introScript }} />
-      </head>
-      <body>
-        <SmoothScroll>
-          <IntroProvider>
-            <Navbar />
-            {children}
-            <ChatLauncher />
-            <CommandPalette items={buildSearchIndex()} />
-          </IntroProvider>
-        </SmoothScroll>
-      </body>
+    <html lang="id" className={`${interTight.variable} antialiased`} suppressHydrationWarning>
+      <body>{children}</body>
     </html>
   );
 }
