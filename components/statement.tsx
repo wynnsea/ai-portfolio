@@ -34,7 +34,7 @@ export function Statement() {
       </Parallax>
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
-        <p className="mb-8 text-xs uppercase tracking-[0.25em] text-secondary">01 / Intro</p>
+        <p className="mb-8 text-xs uppercase tracking-[0.25em] text-secondary">01 / Perkenalan</p>
         <p
           ref={ref}
           className="max-w-5xl text-[clamp(2rem,5.5vw,4.5rem)] font-light leading-[1.08] tracking-[-0.04em]"

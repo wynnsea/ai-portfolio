@@ -5,7 +5,7 @@ import type { ExplainLevel } from "@/lib/ai/types";
 import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
 
 const levels: { id: ExplainLevel; label: string }[] = [
-  { id: "recruiter", label: "Buat recruiter" },
+  { id: "recruiter", label: "Buat rekruter" },
   { id: "engineer", label: "Buat engineer" },
   { id: "awam", label: "Jelasin kayak ke bocil" },
 ];

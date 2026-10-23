@@ -15,21 +15,21 @@ export const site = {
   // Status ketersediaan di hero. Set `open: false` untuk menyembunyikan badge.
   availability: {
     open: true,
-    label: "Open to work",
+    label: "Siap bekerja",
     detail: "Full-time & freelance",
   },
   email: "wayaandeva123@gmail.com",
   // Ganti dengan foto kamu, misalnya "/images/profile.jpg"
   photo: "/images/wyn.jpg",
   stats: [
-    { value: "6", label: "Project kelar" }, // dummy
+    { value: "6", label: "Proyek kelar" }, // dummy
     { value: "3", label: "Tahun ngulik" },
   ],
   nav: [
-    { label: "About Me", href: "#about" },
-    { label: "Projects", href: "#projects" },
-    { label: "Certifications", href: "#certifications" },
-    { label: "Activities", href: "#activities" },
+    { label: "Tentang Saya", href: "#about" },
+    { label: "Proyek", href: "#projects" },
+    { label: "Sertifikasi", href: "#certifications" },
+    { label: "Kegiatan", href: "#activities" },
     { label: "Blog", href: "#blog" },
   ],
   socials: [

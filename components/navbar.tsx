@@ -89,7 +89,7 @@ export function Navbar() {
             className="flex size-10 items-center justify-center gap-2 rounded-full border border-line text-xs text-secondary transition-colors hover:border-primary hover:text-primary md:size-auto md:px-3 md:py-1.5"
           >
             <span aria-hidden className="text-sm leading-none">⌕</span>
-            <span className="hidden md:inline">Search</span>
+            <span className="hidden md:inline">Cari</span>
             <kbd className="hidden rounded bg-tertiary px-1.5 py-0.5 text-[10px] xl:inline">⌘K</kbd>
           </button>
           <Link
@@ -97,7 +97,7 @@ export function Navbar() {
             onClick={go("#contact")}
             className="hidden items-center gap-1.5 whitespace-nowrap border-b border-primary pb-0.5 text-sm font-medium md:inline-flex"
           >
-            Let&apos;s Talk <span aria-hidden>↗</span>
+            Ayo Ngobrol <span aria-hidden>↗</span>
           </Link>
           <button
             type="button"
@@ -126,7 +126,7 @@ export function Navbar() {
             className="flex h-[calc(100svh-72px)] flex-col overflow-y-auto border-t border-line bg-white px-6 pb-8 md:h-[calc(100svh-80px)] lg:hidden"
           >
             <ul className="flex-1">
-              {[...site.nav, { label: "Contact", href: "#contact" }].map((item, i) => (
+              {[...site.nav, { label: "Kontak", href: "#contact" }].map((item, i) => (
                 <motion.li
                   key={item.href}
                   initial={{ opacity: 0, y: 16 }}
@@ -162,7 +162,7 @@ export function Navbar() {
                 onClick={go("#contact")}
                 className="w-fit rounded-full bg-primary px-5 py-2.5 text-sm text-white md:hidden"
               >
-                Let&apos;s Talk ↗
+                Ayo Ngobrol ↗
               </Link>
             </motion.div>
           </motion.div>

@@ -12,16 +12,16 @@ import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter"
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const suggestions = [
-  "Wayan udah bikin project apa aja?",
-  "Skill Wayan apa aja?",
+  "Wayan udah bikin proyek apa aja?",
+  "Keahlian Wayan apa aja?",
   "Punya sertifikat apa aja?",
   "Ceritain soal Nihongo Buddy",
-  "Saya recruiter, cocok gak?",
+  "Saya rekruter, cocok gak?",
 ];
 
 type Message = { id: number; role: "user" | "assistant"; text: string; action?: SeaAction };
 
-const greetingText = `こんにちは! Saya SEA AI, asisten pribadinya ${site.name}. Mau tau soal project, skill, pengalaman, atau cara ngontak dia? Tanya aja!`;
+const greetingText = `こんにちは! Saya SEA AI, asisten pribadinya ${site.name}. Mau tau soal proyek, keahlian, pengalaman, atau cara ngontak dia? Tanya aja!`;
 
 const greeting: Message = { id: 0, role: "assistant", text: "" };
 

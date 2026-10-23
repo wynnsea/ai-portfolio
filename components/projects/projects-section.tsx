@@ -28,14 +28,14 @@ export function ProjectsSection() {
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">03 / Selected Work</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">03 / Karya Pilihan</p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">
-            Projects<sup className="ml-2 align-top tracking-normal text-lg font-normal text-secondary md:text-2xl">({String(projects.length).padStart(2, "0")})</sup>
+            Proyek<sup className="ml-2 align-top tracking-normal text-lg font-normal text-secondary md:text-2xl">({String(projects.length).padStart(2, "0")})</sup>
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            Kumpulan integrasi AI dan produk web. LLM, API, dan data yang saya rakit jadi tools, banyak yang terinspirasi dari kecintaan saya sama Jepang. Klik card-nya buat lihat cerita lengkapnya.
+            Kumpulan integrasi AI dan produk web. LLM, API, dan data yang saya rakit jadi tools, banyak yang terinspirasi dari kecintaan saya sama Jepang. Klik kartunya buat lihat cerita lengkapnya.
           </p>
         </Reveal>
 

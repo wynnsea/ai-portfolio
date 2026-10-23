@@ -78,7 +78,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
           <div className="relative mx-auto max-w-4xl px-6">
             <Reveal className="flex items-center justify-between text-sm">
               <Link href="/#blog" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
-                <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> All articles
+                <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> Semua artikel
               </Link>
               <span className="font-jp text-secondary">{post.titleJp}</span>
             </Reveal>
@@ -128,7 +128,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
         <section className="border-t border-line bg-tertiary py-24 md:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:pl-24">
             <Reveal>
-              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Keep reading</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Baca juga</p>
             </Reveal>
             <div className="mt-10 grid gap-12 md:grid-cols-2 md:gap-10">
               {more.map((p, i) => (

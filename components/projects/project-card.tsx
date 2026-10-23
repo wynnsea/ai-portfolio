@@ -28,7 +28,7 @@ export function ProjectCard({ project, index, layout }: { project: Project; inde
 
             {/* Lingkaran "View" muncul saat hover */}
             <span className="pointer-events-none absolute left-1/2 top-1/2 grid size-24 -translate-x-1/2 -translate-y-1/2 scale-0 place-items-center rounded-full bg-white text-xs font-medium uppercase tracking-[0.2em] text-primary transition-transform duration-500 ease-expo group-hover:scale-100">
-              View
+              Lihat
             </span>
           </div>
 

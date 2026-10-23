@@ -19,10 +19,10 @@ export function AboutSection() {
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">02 / About Me</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">02 / Tentang Saya</p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-4 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
-          <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">About Me</h2>
+          <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">Tentang Saya</h2>
           <p className="font-jp text-lg text-secondary">私について</p>
         </Reveal>
 
@@ -39,14 +39,14 @@ export function AboutSection() {
 
           <div className="space-y-10 md:col-span-5 md:pl-6">
             <Reveal className="bg-white p-6 shadow-[0_20px_50px_-30px_rgba(42,86,119,0.3)] md:p-8">
-              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Education</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Pendidikan</p>
               <p className="mt-4 text-2xl font-light tracking-tight">{about.education.school}</p>
               <p className="mt-1 text-sm">{about.education.degree}</p>
               <p className="mt-1 text-sm text-secondary">{about.education.period}</p>
             </Reveal>
 
             <Reveal delay={0.1}>
-              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Experience</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Pengalaman</p>
               <ul className="mt-4">
                 {about.experience.map((e) => (
                   <li key={e.role} className="flex items-baseline justify-between gap-4 border-b border-line py-4">
@@ -82,7 +82,7 @@ export function AboutSection() {
         {/* Minat: kartu kanji dengan parallax berbeda-beda */}
         <div className="mt-28">
           <Reveal>
-            <p className="text-xs uppercase tracking-[0.25em] text-secondary">Interests</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-secondary">Minat</p>
           </Reveal>
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {about.interests.map((it, i) => (

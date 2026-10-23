@@ -10,7 +10,12 @@ export type JobMatchResult = {
   matched: string[];
   missing: string[];
   projects: { slug: string; title: string; reason: string }[];
+  source: "ai" | "mock";    // dari mana hasilnya
+  lowConfidence?: boolean;  // true = UI tidak menampilkan skor (pilihan B)
+  outOfField?: boolean;     // true = posisi di luar bidang Wayan: tanpa skor dan tanpa daftar gap
+  seniorityNote?: string;
 };
+
 
 export type ExplainLevel = "recruiter" | "engineer" | "awam";
 

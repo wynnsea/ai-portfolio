@@ -43,7 +43,7 @@ export function mockSeaReply(message: string): SeaReply {
     const list = projects.map((p) => p.title).join(", ");
     return {
       reply: `${name} udah ngerjain ${projects.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
-      action: { type: "navigate", href: "/#projects", label: "Lihat semua project" },
+      action: { type: "navigate", href: "/#projects", label: "Lihat semua proyek" },
     };
   }
 
@@ -67,7 +67,7 @@ export function mockSeaReply(message: string): SeaReply {
     const groups = about.skills.map((s) => `${s.group} (${s.items.slice(0, 3).join(", ")})`).join("; ");
     return {
       reply: `Skill utama ${name} ada di tiga area: ${groups}. Fokusnya lebih ke nyambungin AI ke aplikasi, bukan training model dari nol.`,
-      action: { type: "navigate", href: "/#about", label: "Lihat detail skill" },
+      action: { type: "navigate", href: "/#about", label: "Lihat detail keahlian" },
     };
   }
 
@@ -110,11 +110,11 @@ export function mockSeaReply(message: string): SeaReply {
   }
 
   if (has(q, ["halo", "hai", "hi", "hello", "pagi", "siang", "malam", "konnichiwa"])) {
-    return { reply: `Haii! Saya SEA AI, asistennya ${name}. Kamu bisa tanya soal project, skill, pengalaman, atau cara ngontak dia.` };
+    return { reply: `Haii! Saya SEA AI, asistennya ${name}. Kamu bisa tanya soal proyek, keahlian, pengalaman, atau cara ngontak dia.` };
   }
 
   return {
-    reply: `Hmm, saya masih versi demo jadi belum ngerti semua pertanyaan. Coba tanya soal project, skill, pengalaman kerja, pendidikan, atau kontak ${name} ya!`,
+    reply: `Hmm, saya masih versi demo jadi belum ngerti semua pertanyaan. Coba tanya soal proyek, keahlian, pengalaman kerja, pendidikan, atau kontak ${name} ya!`,
   };
 }
 
@@ -190,6 +190,7 @@ export function mockJobMatch(jd: string): JobMatchResult {
       title: p.title,
       reason: hits.length ? `Nyambung lewat ${hits.slice(0, 3).join(", ")}` : p.category,
     })),
+    source: 'mock'
   };
 }
 

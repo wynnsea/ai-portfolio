@@ -152,7 +152,7 @@ export function Hero() {
             }}
             className="group mt-10 inline-flex w-fit items-center gap-2 text-sm"
           >
-            Scroll down
+            Gulir ke bawah
             <span aria-hidden className="inline-block animate-bounce">↓</span>
           </motion.a>
         </motion.div>

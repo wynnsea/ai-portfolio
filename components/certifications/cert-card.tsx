@@ -130,7 +130,7 @@ export function CertCard({ cert, index }: { cert: Certification; index: number }
             )}
             {cert.cover && (
               <span className="pointer-events-none absolute left-1/2 top-1/2 grid size-20 -translate-x-1/2 -translate-y-1/2 scale-0 place-items-center rounded-full bg-primary text-[10px] font-medium uppercase tracking-[0.2em] text-white transition-transform duration-500 ease-expo group-hover:scale-100">
-                View
+                Lihat
               </span>
             )}
           </div>

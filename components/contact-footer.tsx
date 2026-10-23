@@ -7,7 +7,7 @@ export function ContactFooter() {
   return (
     <footer id="contact" className="relative overflow-hidden bg-primary py-28 text-white md:py-40">
       <Wave from="white" />
-      <Parallax offset={-80} className="pointer-events-none absolute -bottom-[10vw] left-0 right-0 select-none">
+      <Parallax offset={-80} className="pointer-events-none absolute bottom-0 left-0 right-0 select-none">
         <p aria-hidden className="whitespace-nowrap text-[22vw] font-semibold leading-none tracking-[-0.06em] text-white/[0.04]">
           Let&apos;s talk
         </p>
@@ -15,7 +15,7 @@ export function ContactFooter() {
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-accent">08 / Contact</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-accent">08 / Kontak</p>
         </Reveal>
         <Reveal delay={0.1}>
           <h2 className="max-w-4xl text-[clamp(2.5rem,7vw,6rem)] font-light leading-[1.02] tracking-[-0.05em]">

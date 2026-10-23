@@ -38,10 +38,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   const nextIndex = projects.findIndex((p) => p.slug === next.slug);
 
   const meta = [
-    { label: "Year", value: project.year },
-    { label: "Role", value: project.role },
-    { label: "Duration", value: project.duration },
-    { label: "Category", value: project.category },
+    { label: "Tahun", value: project.year },
+    { label: "Peran", value: project.role },
+    { label: "Durasi", value: project.duration },
+    { label: "Kategori", value: project.category },
   ];
 
   return (
@@ -59,7 +59,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
             <Reveal className="flex items-center justify-between text-sm">
               <Link href="/#projects" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
-                <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> All projects
+                <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> Semua proyek
               </Link>
               <span className="text-secondary">
                 Project {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
@@ -101,21 +101,21 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
           <Reveal className="grid gap-6 md:grid-cols-12">
             <div className="md:col-span-4">
-              <SectionLabel n="01">Overview</SectionLabel>
+              <SectionLabel n="01">Gambaran umum</SectionLabel>
             </div>
             <p className="text-xl font-light leading-relaxed tracking-tight md:col-span-8 md:text-2xl">{project.overview}</p>
           </Reveal>
 
           <Reveal className="grid gap-6 md:grid-cols-12">
             <div className="md:col-span-4">
-              <SectionLabel n="02">The challenge</SectionLabel>
+              <SectionLabel n="02">Tantangan</SectionLabel>
             </div>
             <p className="text-base leading-relaxed text-secondary md:col-span-8 md:text-lg">{project.challenge}</p>
           </Reveal>
 
           <div className="grid gap-6 md:grid-cols-12">
             <Reveal className="md:col-span-4">
-              <SectionLabel n="03">Approach</SectionLabel>
+              <SectionLabel n="03">Pendekatan</SectionLabel>
             </Reveal>
             <ol className="md:col-span-8">
               {project.approach.map((step, i) => (
@@ -134,7 +134,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <section className="bg-tertiary py-28 md:py-40">
           <div className="mx-auto max-w-7xl px-6 lg:pl-24">
             <Reveal>
-              <SectionLabel n="04">Results</SectionLabel>
+              <SectionLabel n="04">Hasil</SectionLabel>
             </Reveal>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {project.results.map((r, i) => (
@@ -158,7 +158,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <section className="relative overflow-hidden py-28 md:py-40">
           <div className="mx-auto max-w-7xl px-6 lg:pl-24">
             <Reveal>
-              <SectionLabel n="05">Gallery</SectionLabel>
+              <SectionLabel n="05">Galeri</SectionLabel>
             </Reveal>
             <div className="mt-12 flex flex-col gap-10 md:block">
               <Parallax offset={50} className="md:w-[58%]">
@@ -179,7 +179,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <section className="mx-auto max-w-7xl px-6 pb-28 md:pb-40 lg:pl-24">
           <Reveal className="grid gap-10 border-t border-line pt-10 md:grid-cols-12">
             <div className="md:col-span-4">
-              <SectionLabel n="06">Tech stack</SectionLabel>
+              <SectionLabel n="06">Teknologi</SectionLabel>
             </div>
             <div className="md:col-span-8">
               <ul className="flex flex-wrap gap-2">
@@ -192,12 +192,12 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               <div className="mt-10 flex flex-wrap gap-3">
                 {project.links.demo && (
                   <a href={project.links.demo} className="rounded-full bg-primary px-6 py-3 text-sm text-white transition-opacity hover:opacity-80">
-                    Live demo ↗
+                    Demo langsung ↗
                   </a>
                 )}
                 {project.links.source && (
                   <a href={project.links.source} className="rounded-full border border-primary px-6 py-3 text-sm transition-colors hover:bg-primary hover:text-white">
-                    Source code ↗
+                    Kode sumber ↗
                   </a>
                 )}
               </div>
@@ -209,7 +209,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <Link href={`/projects/${next.slug}`} className="group block border-t border-line">
           <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-24 md:grid-cols-12 md:py-32 lg:pl-24">
             <div className="md:col-span-8">
-              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Next project</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Proyek berikutnya</p>
               <p className="mt-4 text-[clamp(3rem,9vw,7.5rem)] font-[250] leading-[0.95] tracking-[-0.05em] transition-transform duration-700 ease-expo group-hover:translate-x-3">
                 {next.title} <span className="inline-block transition-transform duration-700 ease-expo group-hover:rotate-45">↗</span>
               </p>

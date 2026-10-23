@@ -23,7 +23,7 @@ export function BlogSection() {
 
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">06 / Writing</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">06 / Tulisan</p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">
@@ -43,7 +43,7 @@ export function BlogSection() {
                   <ProjectCover project={featured} index={0} className="h-full w-full" sizes="(min-width: 768px) 55vw, 90vw" />
                 </div>
               </ParallaxMedia>
-              <span className="absolute bottom-4 right-4 rounded-full bg-white px-3 py-1 text-xs font-medium">Latest</span>
+              <span className="absolute bottom-4 right-4 rounded-full bg-white px-3 py-1 text-xs font-medium">Terbaru</span>
             </div>
           </Reveal>
           <Reveal delay={0.1} className="md:col-span-5">
@@ -53,7 +53,7 @@ export function BlogSection() {
             <h3 className="mt-4 text-3xl font-light leading-tight tracking-[-0.03em] md:text-5xl">{featured.title}</h3>
             <p className="mt-5 leading-relaxed text-secondary">{featured.excerpt}</p>
             <span className="mt-8 inline-flex items-center gap-2 border-b border-primary pb-0.5 text-sm font-medium">
-              Read article <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:translate-x-1">→</span>
+              Baca artikel <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:translate-x-1">→</span>
             </span>
           </Reveal>
         </Link>

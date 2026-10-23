@@ -4,18 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import type { JobMatchResult } from "@/lib/ai/types";
-import { SAMPLE_JOB } from "@/lib/ai/samples";
 import { Reveal } from "@/components/motion/reveal";
+import { SampleJobPicker } from "@/components/ai/sample-job-picker";
 import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
 import { Wave } from "@/components/wave";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
+// Analisis Gemini butuh sekitar 3–6 detik, jadi tiap langkah tampil 1,5 detik
 const steps = [
   "Baca deskripsi lowongan…",
-  "Nyocokin sama skill Wayan…",
-  "Nyari project yang relevan…",
+  "Misahin syarat wajib dan nilai plus…",
+  "Nyocokin sama profil keahlian Wayan…",
+  "Ngitung skor dan nyari proyek bukti…",
 ];
+const STEP_MS = 1500;
 
 function ScoreRing({ score }: { score: number }) {
   const r = 52;
@@ -42,14 +45,26 @@ function ScoreRing({ score }: { score: number }) {
       <div className="absolute inset-0 grid place-items-center text-center">
         <div>
           <p className="text-4xl font-[250] tracking-tight">{score}%</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">match</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">cocok</p>
         </div>
       </div>
     </div>
   );
 }
 
-/** Recruiter menempel deskripsi lowongan, AI menilai kecocokan Wayan (versi demo). */
+/** Pengganti ScoreRing saat lowongan tidak dinilai (data kurang / beda bidang): skor sengaja tidak ditampilkan. */
+function UnsureRing({ label }: { label: string }) {
+  return (
+    <div className="grid size-36 shrink-0 place-items-center rounded-full border-[6px] border-dashed border-white/15 text-center">
+      <div>
+        <p className="text-4xl font-[250] tracking-tight">?</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Recruiter menempel deskripsi lowongan, Gemini mengekstrak syaratnya, skor dihitung dari profil skill. */
 export function JobMatchSection() {
   const [jd, setJd] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -57,11 +72,14 @@ export function JobMatchSection() {
   const [result, setResult] = useState<JobMatchResult | null>(null);
   const [error, setError] = useState("");
 
+  // Rincian (skill cocok, gap, project) hanya untuk lowongan yang dinilai: sebidang dan datanya cukup
+  const judged = !!result && !result.outOfField && !result.lowConfidence;
+
   async function analyze() {
     setStatus("loading");
     setStep(0);
     setError("");
-    const timer = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 600);
+    const timer = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), STEP_MS);
     try {
       const res = await fetch("/api/job-match", {
         method: "POST",
@@ -86,13 +104,13 @@ export function JobMatchSection() {
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
           <p className="mb-6 flex items-center gap-4 text-xs uppercase tracking-[0.25em] text-secondary">
-            07 / For Recruiters <DemoBadge />
+            07 / Untuk Rekruter <DemoBadge label="SEA AI" />
           </p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
           <h2 className="text-[clamp(3rem,9vw,7rem)] font-light leading-none tracking-[-0.05em]">Job Match</h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            Lagi buka lowongan? Tempel deskripsinya di sini, nanti SEA AI cek seberapa cocok saya sama posisinya, lengkap sama project yang relevan.
+            Lagi buka lowongan? Tempel deskripsinya di sini, nanti SEA AI cek seberapa cocok saya sama posisinya, lengkap sama proyek yang relevan.
           </p>
         </Reveal>
 
@@ -107,7 +125,7 @@ export function JobMatchSection() {
               data-lenis-prevent
               value={jd}
               onChange={(e) => setJd(e.target.value)}
-              placeholder={"Tempel job description di sini…"}
+              placeholder={"Tempel deskripsi lowongan di sini…"}
               rows={11}
               className="mt-3 w-full resize-none rounded-xl border border-line bg-tertiary p-4 text-sm leading-relaxed outline-none transition-colors placeholder:text-secondary focus:border-primary"
             />
@@ -120,10 +138,11 @@ export function JobMatchSection() {
               >
                 {status === "loading" ? "Lagi dianalisis…" : "Cek kecocokan"}
               </button>
-              <button type="button" onClick={() => setJd(SAMPLE_JOB)} className="text-sm text-secondary underline-offset-4 hover:text-primary hover:underline">
-                Pakai contoh lowongan
-              </button>
+              <SampleJobPicker onPick={(job) => setJd(job.text)} />
             </div>
+            <p className="mt-4 text-xs leading-relaxed text-secondary">
+              Mohon jangan tempel informasi yang bersifat rahasia.
+            </p>
           </Reveal>
 
           {/* Hasil */}
@@ -133,7 +152,7 @@ export function JobMatchSection() {
                 {status === "idle" && (
                   <motion.div key="idle" exit={{ opacity: 0 }} className="m-auto max-w-xs text-center text-white/50">
                     <p className="font-jp text-5xl text-white/80">適合</p>
-                    <p className="mt-4 text-sm">Hasil analisis bakal muncul di sini. Belum punya lowongannya? Klik &quot;Pakai contoh lowongan&quot;.</p>
+                    <p className="mt-4 text-sm">Hasil analisis bakal muncul di sini. Belum punya lowongannya? Klik &quot;Pakai contoh lowongan&quot; dan pilih salah satu.</p>
                   </motion.div>
                 )}
 
@@ -153,15 +172,30 @@ export function JobMatchSection() {
                 {status === "done" && result && (
                   <motion.div key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="space-y-7">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-                      <ScoreRing score={result.score} />
-                      <p className="text-base leading-relaxed text-white/85">
-                        <Typewriter key={result.summary} text={result.summary} />
-                      </p>
+                      {result.outOfField ? (
+                        <UnsureRing label="beda bidang" />
+                      ) : result.lowConfidence ? (
+                        <UnsureRing label="kurang data" />
+                      ) : (
+                        <ScoreRing score={result.score} />
+                      )}
+                      <div className="space-y-3">
+                        <p className="text-base leading-relaxed text-white/85">
+                          <Typewriter key={result.summary} text={result.summary} />
+                        </p>
+                        {result.seniorityNote && (
+                          <p className="rounded-lg border border-white/20 px-3 py-2 text-sm text-white/75">
+                            <span aria-hidden>⚠️ </span>
+                            {result.seniorityNote}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
+                    {judged && (
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Skill yang cocok</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">Keahlian yang cocok</p>
                         <ul className="mt-3 flex flex-wrap gap-2">
                           {result.matched.length ? (
                             result.matched.map((s) => (
@@ -189,9 +223,11 @@ export function JobMatchSection() {
                         </ul>
                       </div>
                     </div>
+                    )}
 
+                    {result.projects.length > 0 && (
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">Project yang relevan</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">Proyek yang relevan</p>
                       <ul className="mt-3 divide-y divide-white/10 border-y border-white/10">
                         {result.projects.map((p) => (
                           <li key={p.slug}>
@@ -208,6 +244,13 @@ export function JobMatchSection() {
                         ))}
                       </ul>
                     </div>
+                    )}
+
+                    <p className="text-xs text-white/40">
+                      {result.source === "ai"
+                        ? "Skor dihitung dari profil keahlian Wayan."
+                        : "SEA AI lagi gak bisa dihubungi, jadi ini hasil analisis cepat tanpa AI."}
+                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>

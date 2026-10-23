@@ -30,6 +30,9 @@ const SYNONYMS: Record<string, string[]> = {
   proyek: ["project"],
 };
 
+// Label tampilan untuk jenis hasil pencarian
+const TYPE_LABEL: Record<SearchItem["type"], string> = { Project: "Proyek", Blog: "Blog", Section: "Bagian" };
+
 // Kata sambung yang diabaikan supaya kalimat bebas tetap bisa dicari
 const STOPWORDS = new Set(["yang", "pakai", "pake", "soal", "tentang", "dan", "di", "ke", "buat", "untuk", "dengan", "ada", "aja", "apa", "gimana", "the", "a"]);
 
@@ -156,7 +159,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
                   }
                   if (e.key === "Enter" && results[active]) go(results[active]);
                 }}
-                placeholder={'Coba "project pakai kamera" atau "tulisan soal jepang"'}
+                placeholder={'Coba "proyek pakai kamera" atau "tulisan soal jepang"'}
                 aria-label="Kata kunci pencarian"
                 className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-secondary"
               />
@@ -173,7 +176,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
                     onClick={() => go(item)}
                     className={`flex w-full items-start gap-4 rounded-xl px-4 py-3 text-left transition-colors ${i === active ? "bg-tertiary" : ""}`}
                   >
-                    <span className="mt-0.5 w-14 shrink-0 text-[10px] uppercase tracking-[0.15em] text-secondary">{item.type}</span>
+                    <span className="mt-0.5 w-14 shrink-0 text-[10px] uppercase tracking-[0.15em] text-secondary">{TYPE_LABEL[item.type]}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{item.title}</span>
                       <span className="block truncate text-xs text-secondary">{item.subtitle}</span>

@@ -26,7 +26,7 @@ export default function NotFound() {
 
       <div className="relative mx-auto w-full max-w-7xl px-6 lg:pl-24">
         <Reveal>
-          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">Error 404 / Lost at sea</p>
+          <p className="mb-6 text-xs uppercase tracking-[0.25em] text-secondary">Error 404 / Tersesat di laut</p>
         </Reveal>
         <Reveal delay={0.1}>
           <h1 className="text-[clamp(7rem,26vw,18rem)] font-[250] leading-[0.85] tracking-[-0.06em]">404</h1>
