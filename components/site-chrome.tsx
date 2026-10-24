@@ -6,6 +6,7 @@ import { CommandPalette } from "@/components/ai/command-palette";
 import { InlineScript } from "@/components/inline-script";
 import { buildSearchIndex } from "@/lib/ai/search-index";
 import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
+import { VisitTracker } from "@/components/visit-tracker";
 
 /**
  * Semua elemen khas website portfolio: preloader, smooth scroll, navbar, SEA AI, dan pencarian.
@@ -23,6 +24,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             {children}
             <ChatLauncher />
             <CommandPalette items={buildSearchIndex()} />
+            <VisitTracker />
           </IntroProvider>
         </SmoothScroll>
       </>

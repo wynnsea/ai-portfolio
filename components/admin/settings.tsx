@@ -5,7 +5,8 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { Globe, KeyRound, Plug, User } from "lucide-react";
 import { site } from "@/lib/site";
-import { API_URL, getSettings, updatePassword, updateSettings, uploadFile, type SiteSettings } from "@/lib/admin/api";
+import { getSettings, updatePassword, updateSettings, uploadFile, type SiteSettings } from "@/lib/admin/api";
+import { isSupabaseConfigured, supabaseHost } from "@/lib/supabase/client";
 import { Button, Card, Field, Input, PageHeader, Textarea, Toggle, useToast } from "@/components/admin/ui";
 
 const tabs = [
@@ -231,15 +232,15 @@ export function Settings() {
 
         {tab === "integrasi" && (
           <Card className="space-y-3 p-6">
-            <Row title="API Laravel" desc={API_URL ? API_URL : "NEXT_PUBLIC_API_URL belum diisi di .env.local"}>
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${API_URL ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                {API_URL ? "Terhubung" : "Belum diatur"}
+            <Row title="Database Supabase" desc={isSupabaseConfigured ? supabaseHost : "NEXT_PUBLIC_SUPABASE_URL belum diisi di .env.local"}>
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${isSupabaseConfigured ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                {isSupabaseConfigured ? "Terhubung" : "Belum diatur"}
               </span>
             </Row>
             <Row title="Gemini (SEA AI & Job Match)" desc="Kunci API disimpan di server (GEMINI_API_KEY), tidak tampil di sini">
               <span className="rounded-full bg-ad-soft px-2.5 py-1 text-[11px] font-medium text-ad-deep">Server-side</span>
             </Row>
-            <Row title="Autentikasi" desc="Laravel Sanctum (token Bearer)">
+            <Row title="Autentikasi" desc="Supabase Auth (email & password), akses dibatasi tabel admins">
               <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">Aktif</span>
             </Row>
           </Card>

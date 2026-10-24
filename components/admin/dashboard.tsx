@@ -67,7 +67,7 @@ function VisitorChart({ weeklyVisitors }: { weeklyVisitors: DashboardData["weekl
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Pengunjung Website</h2>
-          <p className="text-xs text-ad-muted">Minggu ini · data contoh, nanti dari API analytics</p>
+          <p className="text-xs text-ad-muted">Minggu ini (Senin–Minggu, WIB) · dihitung sekali per sesi per hari</p>
         </div>
         <div className="flex gap-3 text-[11px] text-ad-muted">
           <span className="flex items-center gap-1.5">

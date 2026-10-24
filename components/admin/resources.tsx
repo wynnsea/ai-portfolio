@@ -104,7 +104,13 @@ export function ArtikelTable() {
         { name: "date", label: "Tanggal terbit", type: "date" },
         { name: "status", label: "Status", type: "select", options: ["Draft", "Terbit", "Arsip"] },
         { name: "excerpt", label: "Ringkasan", required: true, placeholder: "1-2 kalimat pembuka", full: true },
-        { name: "content", label: "Isi artikel", type: "textarea", placeholder: "Mulai menulis di sini..." },
+        {
+          name: "content",
+          label: "Isi artikel",
+          type: "textarea",
+          placeholder: "Mulai menulis di sini...",
+          hint: "Pisahkan paragraf dengan baris kosong. Format: ## subjudul, - poin daftar, > kutipan, ``` blok kode ```",
+        },
       ]}
     />
   );

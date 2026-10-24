@@ -1,9 +1,12 @@
+// Data publik website, dibaca langsung dari Supabase.
+// Nama fungsi dan bentuk hasil sengaja sama dengan versi Laravel sebelumnya,
+// jadi halaman dan komponen yang memakainya tidak perlu diubah.
+// Yang boleh dibaca (mis. hanya proyek berstatus Terbit) diatur oleh RLS di database.
 import type { Activity } from "@/lib/activities";
 import type { Certification } from "@/lib/certifications";
-import type { Post } from "@/lib/posts";
-import type { Project } from "@/lib/projects";
-
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
+import type { Post, PostBlock } from "@/lib/posts";
+import type { CoverTone, Project } from "@/lib/projects";
+import { getPublicClient } from "@/lib/supabase/client";
 
 export type SiteSettings = {
   brand: string;
@@ -20,91 +23,210 @@ export type SiteSettings = {
   features: { chatbot: boolean; preloader: boolean };
 };
 
-type ApiResponse<T> = { data: T };
+// ---------------------------------------------------------------------------
+// Bentuk baris di database (snake_case) → tipe yang dipakai komponen (camelCase)
+// ---------------------------------------------------------------------------
 
-class PublicApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "PublicApiError";
-  }
+type ProjectRow = {
+  slug: string;
+  title: string;
+  title_jp: string;
+  kanji: string;
+  tone: CoverTone;
+  category: string;
+  year: string;
+  role: string;
+  duration: string;
+  summary: string;
+  overview: string;
+  challenge: string;
+  approach: string[];
+  results: Project["results"];
+  stack: string[];
+  links: Project["links"];
+  cover_url: string | null;
+};
+
+type CertificationRow = {
+  title: string;
+  title_jp: string;
+  kanji: string;
+  tone: CoverTone;
+  category: string;
+  issuer: string;
+  year: string | null;
+  score: string | null;
+  note: string | null;
+  credential_url: string | null;
+  cover_url: string | null;
+};
+
+type ActivityRow = {
+  title: string;
+  role: string;
+  organizer: string;
+  year: string | null;
+  description: string;
+  title_jp: string;
+  kanji: string;
+  tone: CoverTone;
+  category: string;
+  photos: string[];
+  focus: string | null;
+};
+
+type PostRow = {
+  slug: string;
+  title: string;
+  title_jp: string;
+  kanji: string;
+  tone: CoverTone;
+  category: string;
+  date: string;
+  read_time: string;
+  excerpt: string;
+  content: PostBlock[] | null;
+  cover_url: string | null;
+};
+
+type SettingsRow = {
+  brand: string;
+  name: string;
+  name_jp: string | null;
+  role: string;
+  description: string;
+  location: string;
+  email: string;
+  photo_url: string | null;
+  cv_url: string | null;
+  availability: SiteSettings["availability"];
+  socials: SiteSettings["socials"];
+  features: SiteSettings["features"];
+};
+
+const toProject = (r: ProjectRow): Project => ({
+  slug: r.slug,
+  title: r.title,
+  titleJp: r.title_jp,
+  kanji: r.kanji,
+  tone: r.tone,
+  category: r.category,
+  year: r.year,
+  role: r.role,
+  duration: r.duration,
+  summary: r.summary,
+  overview: r.overview,
+  challenge: r.challenge,
+  approach: r.approach ?? [],
+  results: r.results ?? [],
+  stack: r.stack ?? [],
+  links: r.links ?? {},
+  cover: r.cover_url ?? undefined,
+});
+
+const toCertification = (r: CertificationRow): Certification => ({
+  title: r.title,
+  titleJp: r.title_jp,
+  kanji: r.kanji,
+  tone: r.tone,
+  category: r.category,
+  issuer: r.issuer,
+  year: r.year ?? undefined,
+  score: r.score ?? undefined,
+  note: r.note ?? undefined,
+  credentialUrl: r.credential_url ?? undefined,
+  cover: r.cover_url ?? undefined,
+});
+
+const toActivity = (r: ActivityRow): Activity => ({
+  title: r.title,
+  role: r.role,
+  organizer: r.organizer,
+  year: r.year ?? undefined,
+  description: r.description,
+  titleJp: r.title_jp,
+  kanji: r.kanji,
+  tone: r.tone,
+  category: r.category,
+  photos: r.photos?.length ? r.photos : undefined,
+  focus: r.focus ?? undefined,
+});
+
+const toPost = (r: PostRow): Post => ({
+  slug: r.slug,
+  title: r.title,
+  titleJp: r.title_jp,
+  kanji: r.kanji,
+  tone: r.tone,
+  category: r.category,
+  date: r.date,
+  readTime: r.read_time,
+  excerpt: r.excerpt,
+  content: r.content ?? [],
+  cover: r.cover_url ?? undefined,
+});
+
+const toSettings = (r: SettingsRow): SiteSettings => ({
+  brand: r.brand,
+  name: r.name,
+  nameJp: r.name_jp,
+  role: r.role,
+  description: r.description,
+  location: r.location,
+  email: r.email,
+  photoUrl: r.photo_url,
+  cvUrl: r.cv_url,
+  availability: r.availability,
+  socials: r.socials ?? [],
+  features: r.features,
+});
+
+function fail(what: string, error: { message: string }): never {
+  throw new Error(`Gagal memuat ${what} dari Supabase: ${error.message}`);
 }
 
-async function fetchPublic<T>(path: string): Promise<T> {
-  if (!API_URL) {
-    throw new Error("NEXT_PUBLIC_API_URL belum dikonfigurasi.");
-  }
-
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new PublicApiError(`Gagal memuat data portfolio dari API (${response.status} ${path}).`, response.status);
-  }
-
-  const result = (await response.json()) as ApiResponse<T>;
-  return result.data;
-}
-
-type ApiProject = Omit<Project, "cover"> & {
-  coverUrl: string | null;
-};
-
-type ApiCertification = Omit<Certification, "cover"> & {
-  coverUrl: string | null;
-};
-
-type ApiActivity = Activity;
-
-type ApiPost = Omit<Post, "cover"> & {
-  coverUrl: string | null;
-};
+// ---------------------------------------------------------------------------
+// Fungsi publik
+// ---------------------------------------------------------------------------
 
 export async function getPublicProjects(): Promise<Project[]> {
-  const projects = await fetchPublic<ApiProject[]>("/projects");
-  return projects.map(({ coverUrl, ...project }) => ({ ...project, cover: coverUrl ?? undefined }));
+  const { data, error } = await getPublicClient().from("projects").select("*").order("id");
+  if (error) fail("proyek", error);
+  return (data as ProjectRow[]).map(toProject);
 }
 
 export async function getPublicProject(slug: string): Promise<Project | null> {
-  try {
-    const { coverUrl, ...project } = await fetchPublic<ApiProject>(`/projects/${encodeURIComponent(slug)}`);
-    return { ...project, cover: coverUrl ?? undefined };
-  } catch (error) {
-    if (error instanceof PublicApiError && error.status === 404) return null;
-    throw error;
-  }
+  const { data, error } = await getPublicClient().from("projects").select("*").eq("slug", slug).maybeSingle();
+  if (error) fail("proyek", error);
+  return data ? toProject(data as ProjectRow) : null;
 }
 
 export async function getPublicCertifications(): Promise<Certification[]> {
-  const certifications = await fetchPublic<ApiCertification[]>("/certifications");
-  return certifications.map(({ coverUrl, ...certification }) => ({ ...certification, cover: coverUrl ?? undefined }));
+  const { data, error } = await getPublicClient().from("certifications").select("*").order("id");
+  if (error) fail("sertifikasi", error);
+  return (data as CertificationRow[]).map(toCertification);
 }
 
 export async function getPublicActivities(): Promise<Activity[]> {
-  return fetchPublic<ApiActivity[]>("/activities");
+  const { data, error } = await getPublicClient().from("activities").select("*").order("id");
+  if (error) fail("kegiatan", error);
+  return (data as ActivityRow[]).map(toActivity);
 }
 
 export async function getPublicPosts(): Promise<Post[]> {
-  const posts = await fetchPublic<ApiPost[]>("/posts");
-  return posts
-    .map(({ coverUrl, ...post }) => ({ ...post, content: post.content ?? [], cover: coverUrl ?? undefined }))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const { data, error } = await getPublicClient().from("posts").select("*").order("date", { ascending: false });
+  if (error) fail("artikel", error);
+  return (data as PostRow[]).map(toPost);
 }
 
 export async function getPublicPost(slug: string): Promise<Post | null> {
-  try {
-    const { coverUrl, ...post } = await fetchPublic<ApiPost>(`/posts/${encodeURIComponent(slug)}`);
-    return { ...post, content: post.content ?? [], cover: coverUrl ?? undefined };
-  } catch (error) {
-    if (error instanceof PublicApiError && error.status === 404) return null;
-    throw error;
-  }
+  const { data, error } = await getPublicClient().from("posts").select("*").eq("slug", slug).maybeSingle();
+  if (error) fail("artikel", error);
+  return data ? toPost(data as PostRow) : null;
 }
 
 export async function getPublicSettings(): Promise<SiteSettings> {
-  return fetchPublic<SiteSettings>("/settings");
+  const { data, error } = await getPublicClient().from("settings").select("*").eq("id", 1).single();
+  if (error) fail("pengaturan", error);
+  return toSettings(data as SettingsRow);
 }

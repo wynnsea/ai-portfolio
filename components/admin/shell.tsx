@@ -105,7 +105,7 @@ function Topbar({ onMenu, dashboard }: { onMenu: () => void; dashboard: Dashboar
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          toast("Pencarian akan aktif setelah tersambung ke API Laravel.");
+          toast("Pencarian global belum tersedia. Pakai kotak pencarian di tiap menu ya.");
         }}
         className="ad-glass-soft hidden h-11 flex-1 items-center gap-2.5 rounded-full px-4 sm:flex md:max-w-sm"
       >

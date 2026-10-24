@@ -5,16 +5,24 @@ export const metadata: Metadata = { title: "Bantuan" };
 
 const faqs = [
   {
-    q: "Kenapa data yang saya tambah hilang setelah refresh?",
-    a: "Panel ini masih UI saja. Data disimpan sementara di memori browser sampai API Laravel tersambung.",
+    q: "Data disimpan di mana?",
+    a: "Di database Supabase (Postgres). Tabelnya: projects, certifications, activities, posts, messages, settings, dan page_views. Skemanya ada di supabase/migrations.",
   },
   {
-    q: "Bagaimana cara menyambungkan ke Laravel?",
-    a: "Isi NEXT_PUBLIC_API_URL di .env.local (mis. http://localhost:8000/api), lalu ganti isi fungsi di lib/admin/api.ts dengan fetch ke endpoint di bawah.",
+    q: "Kenapa proyek atau artikel saya tidak muncul di website?",
+    a: "Website hanya menampilkan proyek dan artikel berstatus Terbit. Draft dan Arsip hanya terlihat di panel ini.",
   },
   {
     q: "Login pakai apa?",
-    a: "Rencananya Laravel Sanctum. Endpoint /api/admin/login mengembalikan token, lalu token dikirim sebagai header Authorization: Bearer di setiap request.",
+    a: "Supabase Auth (email & password). Akun harus terdaftar di tabel public.admins. Akun lain tetap bisa login ke Supabase, tapi semua perubahan data akan ditolak database.",
+  },
+  {
+    q: "Bagaimana menambah admin baru?",
+    a: "Buat user di Supabase Dashboard → Authentication → Users, lalu di SQL Editor: insert into public.admins (user_id) select id from auth.users where email = 'email@contoh.com';",
+  },
+  {
+    q: "Bagaimana menulis subjudul atau daftar di artikel?",
+    a: "Di kolom isi artikel: ## untuk subjudul, - untuk poin daftar, > untuk kutipan, dan ``` untuk blok kode. Pisahkan paragraf dengan baris kosong.",
   },
   {
     q: "Apakah halaman admin muncul di Google?",
@@ -22,29 +30,18 @@ const faqs = [
   },
 ];
 
-const endpoints = [
-  ["POST", "/api/admin/login", "Login, kembalikan token"],
-  ["POST", "/api/admin/logout", "Hapus token aktif"],
-  ["GET", "/api/admin/{resource}", "Daftar data (search, filter, paginasi)"],
-  ["POST", "/api/admin/{resource}", "Tambah data"],
-  ["GET", "/api/admin/{resource}/{id}", "Detail data"],
-  ["PUT", "/api/admin/{resource}/{id}", "Ubah data"],
-  ["DELETE", "/api/admin/{resource}/{id}", "Hapus data"],
-  ["GET", "/api/{resource}", "Data publik untuk website (hanya Terbit)"],
-  ["POST", "/api/messages", "Kirim pesan dari form kontak"],
+const access = [
+  ["Pengunjung", "Proyek & artikel", "Baca yang berstatus Terbit"],
+  ["Pengunjung", "Sertifikasi, kegiatan, pengaturan", "Baca semua"],
+  ["Pengunjung", "page_views", "Catat kunjungan"],
+  ["Admin", "Semua tabel", "Baca, tambah, ubah, hapus"],
+  ["Admin", "Storage bucket media", "Unggah, ubah, hapus file"],
 ];
-
-const methodTone: Record<string, string> = {
-  GET: "bg-emerald-50 text-emerald-700",
-  POST: "bg-ad-soft text-ad-deep",
-  PUT: "bg-amber-50 text-amber-700",
-  DELETE: "bg-rose-50 text-rose-600",
-};
 
 export default function Page() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Bantuan" description="FAQ dan rencana endpoint API Laravel." />
+      <PageHeader title="Bantuan" description="FAQ dan aturan akses data di Supabase." />
 
       <section className="grid gap-3 md:grid-cols-2">
         {faqs.map((f) => (
@@ -60,21 +57,23 @@ export default function Page() {
 
       <section className="ad-glass-soft overflow-hidden rounded-3xl">
         <div className="border-b border-white/80 px-5 py-4">
-          <h2 className="font-semibold">Rencana endpoint</h2>
-          <p className="text-xs text-ad-muted">
-            {"{resource}"}: projects, certifications, activities, posts, messages. Detail lengkap: docs/BACKEND-API-BRIEF.md
-          </p>
+          <h2 className="font-semibold">Aturan akses (Row Level Security)</h2>
+          <p className="text-xs text-ad-muted">Ditegakkan langsung oleh database, bukan oleh kode website.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
             <tbody>
-              {endpoints.map(([method, path, desc]) => (
-                <tr key={method + path} className="border-b border-white/60 last:border-0">
-                  <td className="w-24 px-5 py-3">
-                    <span className={`rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold ${methodTone[method]}`}>{method}</span>
+              {access.map(([who, what, can]) => (
+                <tr key={who + what} className="border-b border-white/60 last:border-0">
+                  <td className="w-32 px-5 py-3">
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${who === "Admin" ? "bg-ad-soft text-ad-deep" : "bg-emerald-50 text-emerald-700"}`}
+                    >
+                      {who}
+                    </span>
                   </td>
-                  <td className="px-5 py-3 font-mono text-xs">{path}</td>
-                  <td className="px-5 py-3 text-ad-muted">{desc}</td>
+                  <td className="px-5 py-3 font-mono text-xs">{what}</td>
+                  <td className="px-5 py-3 text-ad-muted">{can}</td>
                 </tr>
               ))}
             </tbody>
