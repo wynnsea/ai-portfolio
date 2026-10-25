@@ -16,7 +16,27 @@ export const instant = false;
 export async function generateMetadata({ params }: PageProps<"/projects/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const project = await getPublicProject(slug);
-  return project ? { title: project.title, description: project.summary } : {};
+  if (!project) return {};
+
+  const image = project.cover || "/opengraph-image";
+  return {
+    title: project.title,
+    description: project.summary,
+    alternates: { canonical: `/projects/${encodeURIComponent(project.slug)}` },
+    openGraph: {
+      type: "article",
+      title: `${project.title} — ${project.category}`,
+      description: project.summary,
+      url: `/projects/${encodeURIComponent(project.slug)}`,
+      images: [{ url: image, alt: project.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.title,
+      description: project.summary,
+      images: [image],
+    },
+  };
 }
 
 function SectionLabel({ n, children }: { n: string; children: React.ReactNode }) {

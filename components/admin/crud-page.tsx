@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Eye, Inbox, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, Eye, Inbox, Loader2, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import type { Resource, Row } from "@/lib/admin/data";
-import { ApiError, deleteRow, getRow, listRows, saveRow } from "@/lib/admin/api";
+import { ApiError, deleteRow, getRow, listRows, saveRow, uploadFile } from "@/lib/admin/api";
 import { Badge, Button, Field, Input, Modal, PageHeader, Select, Textarea, useToast } from "@/components/admin/ui";
 
 export type FieldDef = {
   name: string;
   label: string;
-  type?: "text" | "textarea" | "select" | "number" | "url" | "date" | "email";
+  type?: "text" | "textarea" | "select" | "number" | "url" | "date" | "email" | "image" | "images";
   options?: string[];
   required?: boolean;
   placeholder?: string;
@@ -118,6 +119,32 @@ export function CrudPage({
     setForm(values);
     setErrors({});
     setMode(row ? { type: "edit", row } : { type: "create" });
+  };
+
+  const uploadImages = async (field: FieldDef, files: FileList | null) => {
+    const selected = Array.from(files ?? []);
+    if (!selected.length) return;
+    const invalid = selected.find((file) => !file.type.startsWith("image/") || file.size > 5 * 1024 * 1024);
+    if (invalid) {
+      toast("Pilih file gambar dengan ukuran maksimal 5 MB.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const uploads = await Promise.all(selected.map((file) => uploadFile(file, resource)));
+      const urls = uploads.map((upload) => upload.url);
+      setForm((currentForm) => {
+        const existing = currentForm[field.name]?.split(/\r?\n/).map((url) => url.trim()).filter(Boolean) ?? [];
+        const nextUrls = field.type === "images" ? [...existing, ...urls] : urls.slice(-1);
+        return { ...currentForm, [field.name]: nextUrls.join("\n") };
+      });
+      toast(`${urls.length} gambar berhasil diunggah.`);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal mengunggah gambar.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -362,7 +389,49 @@ export function CrudPage({
           {fields.map((f) => (
             <div key={f.name} className={f.full || f.type === "textarea" ? "sm:col-span-2" : ""}>
               <Field label={`${f.label}${f.required ? " *" : ""}`} hint={f.hint} error={errors[f.name]}>
-                {f.type === "textarea" ? (
+                {f.type === "image" || f.type === "images" ? (
+                  <div className="space-y-3">
+                    {f.type === "image" ? (
+                      <Input
+                        type="url"
+                        value={form[f.name] ?? ""}
+                        placeholder="https://... atau upload gambar"
+                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      />
+                    ) : (
+                      <Textarea
+                        value={form[f.name] ?? ""}
+                        placeholder="Satu URL gambar per baris"
+                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      />
+                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
+                        <Upload className="size-4" />
+                        Upload gambar
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple={f.type === "images"}
+                          disabled={busy}
+                          className="sr-only"
+                          onChange={(event) => {
+                            void uploadImages(f, event.currentTarget.files);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                      <span className="text-xs text-ad-muted">Maks. 5 MB per gambar</span>
+                    </div>
+                    {!!form[f.name]?.trim() && (
+                      <div className="flex flex-wrap gap-2">
+                        {form[f.name].split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => (
+                          <Image key={url} src={url} alt="Pratinjau gambar" width={112} height={72} unoptimized className="h-[72px] w-28 rounded-xl object-cover ring-1 ring-ad-line" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : f.type === "textarea" ? (
                   <Textarea value={form[f.name] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
                 ) : f.type === "select" ? (
                   <Select value={form[f.name] ?? ""} options={f.options ?? []} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
@@ -410,6 +479,14 @@ export function CrudPage({
                   <dd className="mt-1 whitespace-pre-line text-sm text-ad-ink">
                     {!value ? (
                       <span className="text-ad-muted">Belum diisi</span>
+                    ) : f.type === "image" || f.type === "images" ? (
+                      <div className="flex flex-wrap gap-2">
+                        {value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => (
+                          <a key={url} href={url} target="_blank" rel="noopener noreferrer" aria-label="Buka gambar di tab baru">
+                            <Image src={url} alt="" width={144} height={96} unoptimized className="h-24 w-36 rounded-xl object-cover ring-1 ring-ad-line" />
+                          </a>
+                        ))}
+                      </div>
                     ) : f.type === "url" ? (
                       <a href={value} target="_blank" rel="noopener noreferrer" className="text-ad-deep underline underline-offset-2">
                         {value}

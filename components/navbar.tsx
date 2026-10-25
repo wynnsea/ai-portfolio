@@ -207,7 +207,7 @@ export function Navbar() {
                 onClick={go("#contact")}
                 className="w-fit rounded-full bg-primary px-5 py-2.5 text-sm text-white md:hidden"
               >
-                Ayo Ngobrol ↗
+                Let's Talk ↗
               </Link>
             </motion.div>
           </motion.div>

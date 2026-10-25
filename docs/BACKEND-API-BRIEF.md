@@ -1,4 +1,10 @@
-# Brief Backend API: Portfolio WYNNSEA
+# Brief Backend API: Portfolio WYNNSEA (Legacy)
+
+> **Dokumen ini sudah tidak menggambarkan backend saat ini.** Frontend sekarang memakai Supabase
+> langsung (Postgres, Auth, Storage, dan RLS), bukan API Laravel/Sanctum/MySQL. Gunakan
+> `supabase/migrations/20261024000000_init.sql`, `supabase/seed.sql`, serta bagian "Backend
+> Supabase" di `README.md` untuk konfigurasi aktif. Bagian di bawah dipertahankan hanya sebagai
+> referensi historis bagi integrasi Laravel yang lama; jangan dipakai untuk setup baru.
 
 Dokumen ini untuk developer/agent yang membangun **backend Laravel** untuk portfolio WYNNSEA.
 Frontend sudah jadi (Next.js) dan saat ini memakai data statis + data mock. Tugas backend:

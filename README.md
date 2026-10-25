@@ -42,6 +42,20 @@ Sebelum dipublikasikan dengan LLM asli: tambahkan rate limit per IP, cache hasil
 
 Butuh Node.js 20.9 atau lebih baru.
 
+### Backend Supabase
+
+Website dan panel admin memakai Supabase (Postgres, Auth, dan Storage), bukan API Laravel.
+
+1. Salin `.env.example` menjadi `.env.local`, lalu isi `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `GEMINI_API_KEY`.
+2. Di Supabase SQL Editor, jalankan `supabase/migrations/20261024000000_init.sql`,
+   lalu `supabase/seed.sql` untuk membuat skema dan data awal.
+3. Buat akun admin di Supabase Authentication, lalu daftarkan UUID user tersebut ke
+   `public.admins` agar kebijakan RLS memberi akses tulis ke panel.
+
+Jangan gunakan service role key di browser atau variabel `NEXT_PUBLIC_*`; akses database
+publik dan admin dibatasi oleh kebijakan RLS di migration.
+
 ```bash
 npm install
 npm run dev        # http://localhost:3000

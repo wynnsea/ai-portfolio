@@ -21,12 +21,23 @@ export function ProyekTable() {
       ]}
       fields={[
         { name: "title", label: "Judul", required: true, placeholder: "mis. Minori AI RCR", full: true },
+        { name: "titleJp", label: "Judul Jepang", placeholder: "採用AIシステム" },
+        { name: "kanji", label: "Kanji cover", placeholder: "採" },
+        { name: "tone", label: "Warna cover", type: "select", options: ["dark", "mid", "light"] },
         { name: "category", label: "Kategori", required: true, placeholder: "mis. AI Grading · Rekrutmen" },
-        { name: "year", label: "Tahun", type: "number", required: true, placeholder: "2026" },
+        { name: "year", label: "Tahun", required: true, placeholder: "2026" },
         { name: "role", label: "Peran", placeholder: "mis. Fullstack Developer" },
+        { name: "duration", label: "Durasi", placeholder: "mis. 2 bulan" },
         { name: "status", label: "Status", type: "select", options: ["Draft", "Terbit", "Arsip"] },
         { name: "stack", label: "Tech stack", placeholder: "Laravel, React, MySQL", hint: "Pisahkan dengan koma", full: true },
-        { name: "summary", label: "Ringkasan", type: "textarea", required: true, placeholder: "Jelaskan singkat proyek ini..." },
+        { name: "coverUrl", label: "Gambar cover", type: "image", hint: "Opsional. Upload gambar agar cover kanji di website diganti foto.", full: true },
+        { name: "summary", label: "Ringkasan", type: "textarea", required: true, placeholder: "Jelaskan singkat proyek ini...", full: true },
+        { name: "overview", label: "Gambaran proyek", type: "textarea", full: true },
+        { name: "challenge", label: "Tantangan", type: "textarea", full: true },
+        { name: "approach", label: "Pendekatan", type: "textarea", hint: "Satu langkah per baris.", full: true },
+        { name: "results", label: "Hasil", type: "textarea", hint: "Satu hasil per baris dengan format: Nilai | Keterangan", full: true },
+        { name: "demoUrl", label: "Link demo", type: "url" },
+        { name: "sourceUrl", label: "Link source code", type: "url" },
       ]}
     />
   );
@@ -49,10 +60,15 @@ export function SertifikasiTable() {
       ]}
       fields={[
         { name: "title", label: "Nama sertifikat", required: true, placeholder: "mis. JLPT N4", full: true },
+        { name: "titleJp", label: "Judul Jepang", placeholder: "日本語能力試験" },
+        { name: "kanji", label: "Kanji cover", placeholder: "証" },
+        { name: "tone", label: "Warna cover", type: "select", options: ["dark", "mid", "light"] },
         { name: "issuer", label: "Penerbit", required: true, placeholder: "mis. Japan Foundation" },
-        { name: "category", label: "Kategori", type: "select", options: ["Japanese", "English", "Web Dev", "AI"] },
-        { name: "year", label: "Tahun", type: "number", placeholder: "2025" },
+        { name: "category", label: "Kategori", placeholder: "Japanese, English, Web Dev, AI" },
+        { name: "year", label: "Tahun", placeholder: "mis. Des 2024" },
         { name: "score", label: "Skor / Level", placeholder: "mis. 520" },
+        { name: "note", label: "Catatan", type: "textarea", full: true },
+        { name: "coverUrl", label: "Foto sertifikat", type: "image", hint: "Gambar ini tampil di card dan popup sertifikat.", full: true },
         { name: "credentialUrl", label: "Link kredensial", type: "url", placeholder: "https://...", full: true },
       ]}
     />
@@ -74,10 +90,16 @@ export function KegiatanTable() {
       ]}
       fields={[
         { name: "title", label: "Nama kegiatan", required: true, full: true },
+        { name: "titleJp", label: "Judul Jepang", placeholder: "文化祭" },
+        { name: "kanji", label: "Kanji cover", placeholder: "祭" },
+        { name: "tone", label: "Warna cover", type: "select", options: ["dark", "mid", "light"] },
+        { name: "category", label: "Kategori", placeholder: "Program, Facilitator, Industry..." },
         { name: "role", label: "Peran", required: true, placeholder: "mis. Fasilitator" },
         { name: "organizer", label: "Penyelenggara", placeholder: "mis. Politeknik Takumi" },
-        { name: "year", label: "Tahun", type: "number", placeholder: "2025" },
-        { name: "description", label: "Deskripsi", type: "textarea", placeholder: "Ceritakan singkat kegiatannya..." },
+        { name: "year", label: "Tahun", placeholder: "2025" },
+        { name: "focus", label: "Fokus crop foto", placeholder: "50% 70%", hint: "Opsional, format CSS object-position." },
+        { name: "photos", label: "Foto kegiatan", type: "images", hint: "Upload satu atau beberapa foto. Foto pertama menjadi cover, sisanya tampil di slideshow.", full: true },
+        { name: "description", label: "Deskripsi", type: "textarea", placeholder: "Ceritakan singkat kegiatannya...", full: true },
       ]}
     />
   );
@@ -100,9 +122,13 @@ export function ArtikelTable() {
       ]}
       fields={[
         { name: "title", label: "Judul", required: true, full: true },
-        { name: "category", label: "Kategori", type: "select", options: ["Integrasi AI", "Budaya Jepang", "Web Dev", "Cerita"] },
+        { name: "titleJp", label: "Judul Jepang", placeholder: "採用AI" },
+        { name: "kanji", label: "Kanji cover", placeholder: "書" },
+        { name: "tone", label: "Warna cover", type: "select", options: ["dark", "mid", "light"] },
+        { name: "category", label: "Kategori", placeholder: "Integrasi AI, Budaya Jepang, Web Dev..." },
         { name: "date", label: "Tanggal terbit", type: "date" },
         { name: "status", label: "Status", type: "select", options: ["Draft", "Terbit", "Arsip"] },
+        { name: "coverUrl", label: "Gambar cover", type: "image", hint: "Opsional. Cover ini tampil di daftar dan halaman artikel.", full: true },
         { name: "excerpt", label: "Ringkasan", required: true, placeholder: "1-2 kalimat pembuka", full: true },
         {
           name: "content",

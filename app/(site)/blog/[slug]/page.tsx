@@ -18,7 +18,28 @@ export const instant = false;
 export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPublicPost(slug);
-  return post ? { title: post.title, description: post.excerpt } : {};
+  if (!post) return {};
+
+  const image = post.cover || "/opengraph-image";
+  return {
+    title: post.title,
+    description: post.excerpt,
+    alternates: { canonical: `/blog/${encodeURIComponent(post.slug)}` },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      url: `/blog/${encodeURIComponent(post.slug)}`,
+      images: [{ url: image, alt: post.title }],
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [image],
+    },
+  };
 }
 
 function Block({ block }: { block: PostBlock }) {

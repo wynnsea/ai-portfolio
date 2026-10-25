@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
 import { site } from "@/lib/site";
+import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 // Alternatif gratis yang mirip Aeonik (neo-grotesk, bersih & modern).
@@ -10,22 +11,55 @@ const interTight = Inter_Tight({
   subsets: ["latin"],
 });
 
-// URL website setelah online, dipakai untuk link absolut gambar preview.
-// Isi NEXT_PUBLIC_SITE_URL di .env (mis. https://wynnsea.vercel.app). Di Vercel, Next.js mengisinya otomatis.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const seoName = "Wayan Deva Adhisthanaya";
 
 export const metadata: Metadata = {
-  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
-  title: site.brand,
-  description: site.metaDescription,
+  metadataBase: siteUrl,
+  title: {
+    default: `${seoName} (${site.brand}) | ${site.role}`,
+    template: `%s | ${site.brand}`,
+  },
+  description: `${seoName}, dikenal juga dengan nama ${site.brand}. Portfolio resmi dan profil profesional Wayan Deva Adhisthanaya.`,
+  applicationName: site.brand,
+  keywords: [
+    seoName,
+    "Wayan Deva",
+    "Wayan Adhisthanaya",
+    "Wynnsea",
+    "Wynnsea portfolio",
+    "portfolio Wayan Deva Adhisthanaya",
+    "website resmi Wayan Deva Adhisthanaya",
+  ],
+  authors: [{ name: seoName, url: siteUrl.toString() }],
+  creator: seoName,
+  publisher: site.brand,
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "id_ID",
     siteName: site.brand,
-    title: `${site.brand} | ${site.name}, ${site.role}`,
-    description: site.metaDescription,
+    title: `${seoName} (${site.brand}) | ${site.role}`,
+    description: `${seoName}, dikenal juga dengan nama ${site.brand}. Portfolio resmi dan profil profesional.`,
+    url: "/",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${site.name} — ${site.role}` }],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: `${seoName} (${site.brand}) | ${site.role}`,
+    description: `${seoName}, dikenal juga dengan nama ${site.brand}. Portfolio resmi dan profil profesional.`,
+    images: ["/opengraph-image"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 // Layout root: hanya <html>, font, dan metadata. Dipakai bersama oleh website (site) dan admin.

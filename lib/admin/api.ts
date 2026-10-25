@@ -73,25 +73,28 @@ const resources: Record<Resource, ResourceConfig> = {
   proyek: {
     table: "projects",
     search: ["title", "category", "role"],
-    fields: ["title", "category", "year", "role", "status", "stack", "summary"],
+    fields: [
+      "title", "titleJp", "kanji", "tone", "category", "year", "role", "duration", "status", "stack",
+      "coverUrl", "summary", "overview", "challenge", "approach", "results", "demoUrl", "sourceUrl",
+    ],
     slug: true,
   },
   sertifikasi: {
     table: "certifications",
     search: ["title", "issuer", "category"],
-    fields: ["title", "issuer", "category", "year", "score", "credentialUrl"],
-    nullable: ["year", "score", "credentialUrl"],
+    fields: ["title", "titleJp", "kanji", "tone", "issuer", "category", "year", "score", "note", "coverUrl", "credentialUrl"],
+    nullable: ["year", "score", "note", "coverUrl", "credentialUrl"],
   },
   kegiatan: {
     table: "activities",
     search: ["title", "role", "organizer"],
-    fields: ["title", "role", "organizer", "year", "description"],
+    fields: ["title", "titleJp", "kanji", "tone", "category", "role", "organizer", "year", "description", "photos", "focus"],
     nullable: ["year"],
   },
   artikel: {
     table: "posts",
     search: ["title", "category", "excerpt"],
-    fields: ["title", "category", "date", "status", "excerpt", "content"],
+    fields: ["title", "titleJp", "kanji", "tone", "category", "date", "status", "coverUrl", "excerpt", "content"],
     slug: true,
   },
   pesan: {
@@ -109,6 +112,18 @@ function toRow(record: Record<string, unknown>): Row {
   const row: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(record)) row[toCamel(key)] = value;
   if (Array.isArray(row.stack)) row.stack = row.stack.join(", ");
+  if (Array.isArray(row.approach)) row.approach = row.approach.join("\n");
+  if (Array.isArray(row.results)) {
+    row.results = (row.results as { value?: string; label?: string }[])
+      .map((result) => [result.value ?? "", result.label ?? ""].filter(Boolean).join(" | "))
+      .join("\n");
+  }
+  if (Array.isArray(row.photos)) row.photos = row.photos.join("\n");
+  if (row.links && typeof row.links === "object") {
+    const links = row.links as Record<string, unknown>;
+    row.demoUrl = typeof links.demo === "string" ? links.demo : "";
+    row.sourceUrl = typeof links.source === "string" ? links.source : "";
+  }
   if (Array.isArray(row.content)) row.content = blocksToText(row.content as PostBlock[]);
   // Pesan tidak punya kolom tanggal sendiri: pakai waktu masuknya
   if (row.date === undefined && typeof row.createdAt === "string") row.date = row.createdAt.slice(0, 10);
@@ -125,6 +140,19 @@ function toRecord(config: ResourceConfig, payload: Record<string, unknown>): Rec
 
     if (field === "stack" && typeof value === "string") {
       value = value.split(",").map((s) => s.trim()).filter(Boolean);
+    } else if (field === "approach" && typeof value === "string") {
+      value = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    } else if (field === "results" && typeof value === "string") {
+      value = value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [result, ...label] = line.split("|");
+          return { value: result.trim(), label: label.join("|").trim() };
+        });
+    } else if (field === "photos" && typeof value === "string") {
+      value = value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
     } else if (field === "content" && typeof value === "string") {
       record.read_time = readTimeOf(value);
       value = textToBlocks(value);
@@ -134,7 +162,17 @@ function toRecord(config: ResourceConfig, payload: Record<string, unknown>): Rec
       value = null;
     }
 
-    record[toSnake(field)] = value;
+    if (field === "demoUrl" || field === "sourceUrl") {
+      const links = (record.links as Record<string, string> | undefined) ?? {};
+      if (typeof value === "string" && value) links[field === "demoUrl" ? "demo" : "source"] = value;
+      record.links = links;
+    } else {
+      const column = field === "coverUrl" ? "cover_url" : toSnake(field);
+      record[column] = value;
+    }
+  }
+  if (config.table === "projects" && "links" in record && Object.keys(record.links as object).length === 0) {
+    record.links = {};
   }
   return record;
 }
@@ -432,7 +470,7 @@ export async function updateSettings(settings: Partial<SiteSettings>): Promise<S
 
 export async function uploadFile(file: File, folder: string): Promise<{ url: string; path: string }> {
   const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
-  const path = `${folder}/${Date.now()}-${safeName}`;
+  const path = `${folder}/${crypto.randomUUID()}-${safeName}`;
   const storage = db().storage.from("media");
 
   const { error } = await storage.upload(path, file, { contentType: file.type, upsert: false });
