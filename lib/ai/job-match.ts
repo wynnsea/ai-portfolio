@@ -1,8 +1,16 @@
+import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ApiError, GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { z } from "zod";
 import { skillProfile } from "@/lib/ai/skill-profile";
-import { ApiError, GoogleGenAI } from "@google/genai";
+import { buildJobMatchResult, scoreJob, type ScoreResult } from "@/lib/ai/job-match-score";
+import { invokeStructuredWithFallback } from "@/lib/ai/langchain-llm";
+import { mockJobMatch } from "@/lib/ai/mock";
+import type { JobMatchResult } from "@/lib/ai/types";
+import type { Project } from "@/lib/projects";
 
 // "lainnya" dipakai kalau syarat lowongan tidak cocok dengan skill mana pun di profil
-const skillIds = [...skillProfile.map((s) => s.id), "lainnya"];
+const skillIds: [string, ...string[]] = ["lainnya", ...skillProfile.map((s) => s.id)];
 
 /** Bentuk JSON yang wajib dikembalikan AI. */
 export const extractionSchema = {
@@ -45,8 +53,29 @@ export const extractionSchema = {
   required: ["isJobPosting", "position", "seniority", "requirements"],
 };
 
+const extractionZodSchema = z.object({
+  isJobPosting: z.boolean().describe("true jika teks adalah lowongan kerja atau job description"),
+  position: z.string().describe("Nama posisi, misalnya 'Junior AI Engineer'. String kosong jika tidak disebut."),
+  seniority: z.enum(["intern", "junior", "mid", "senior", "lead", "unknown"]),
+  minYears: z.number().int().optional().describe("Minimal tahun pengalaman yang diminta jika disebut."),
+  requirements: z.array(
+    z.object({
+      text: z.string().describe("Syarat singkat, maksimal 6 kata, bahasa Indonesia"),
+      importance: z.enum(["wajib", "plus"]),
+      skillId: z.enum(skillIds),
+      relevan: z.boolean().describe("true jika syarat ini termasuk bidang software engineering, AI, data, atau IT"),
+    }),
+  ),
+});
+
 /** Tipe TypeScript yang sama dengan schema di atas. */
 export type Extraction = {
+  isJobPosting: boolean;
+  position: string;
+  seniority: "intern" | "junior",
+  minYears?: number;
+  requirements: { text: string; importance: "wajib" | "plus"; skillId: string; relevan: boolean }[];
+} | {
   isJobPosting: boolean;
   position: string;
   seniority: "intern" | "junior" | "mid" | "senior" | "lead" | "unknown";
@@ -70,17 +99,18 @@ Aturan:
 Daftar skill:
 ${skillProfile.map((s) => `- ${s.id}: ${s.description}`).join("\n")}`;
 
-// Urutan model yang dicoba. Model terbaru sering penuh (503) di free tier.
-const MODELS = ["gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.8-flash"];
+// Urutan model aktif yang dicoba (thinkingLevel: MINIMAL = 0 thought tokens).
+const MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash", "gemini-3.8-flash"];
 
 /**
- * Minta AI mengekstrak syarat dari teks lowongan.
+ * Minta AI mengekstrak syarat dari teks lowongan dengan thinking dimatikan (ThinkingLevel.MINIMAL).
  * Mengembalikan null kalau semua model gagal (pemanggil lalu memakai mock).
  */
 export async function extractJob(jd: string): Promise<{ data: Extraction; model: string } | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) return null;
 
+  // 1. Panggil via @google/genai SDK dengan ThinkingLevel.MINIMAL (0 thought tokens)
   const ai = new GoogleGenAI({ apiKey });
 
   for (const model of MODELS) {
@@ -90,7 +120,8 @@ export async function extractJob(jd: string): Promise<{ data: Extraction; model:
         contents: `<lowongan>\n${jd}\n</lowongan>`,
         config: {
           systemInstruction,
-          httpOptions: { timeout: 15_000 },
+          httpOptions: { timeout: 25_000 },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseMimeType: "application/json",
           responseJsonSchema: extractionSchema,
         },
@@ -101,10 +132,98 @@ export async function extractJob(jd: string): Promise<{ data: Extraction; model:
       if (e instanceof ApiError && (e.status === 404 || e.status === 429 || e.status >= 500)) continue;
       if (e instanceof ApiError) {
         console.error(`[job-match] ${model} ditolak (status ${e.status}):`, e.message);
-        return null;
+        break;
       }
       console.error(`[job-match] ${model} timeout/jaringan:`, e);
     }
   }
+
+  // 2. Cadangan via LangChain ChatGoogleGenerativeAI Structured Output (thinkingBudget: 0)
+  const lcResult = await invokeStructuredWithFallback({
+    schema: extractionZodSchema,
+    schemaName: "JobPostingExtraction",
+    messages: [new SystemMessage(systemInstruction), new HumanMessage(`<lowongan>\n${jd}\n</lowongan>`)],
+    temperature: 0,
+  });
+
+  if (lcResult) {
+    return { data: lcResult.data as Extraction, model: lcResult.model };
+  }
+
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// LangGraph StateGraph untuk Job Match (Extract [No-Thinking] -> Deterministic Score)
+// ---------------------------------------------------------------------------
+
+const JobMatchGraphAnnotation = Annotation.Root({
+  jd: Annotation<string>(),
+  projects: Annotation<Project[]>(),
+  ownerName: Annotation<string>(),
+  extraction: Annotation<{ data: Extraction; model: string } | null>(),
+  scoreResult: Annotation<ScoreResult | null>(),
+  baseResult: Annotation<JobMatchResult | null>(),
+  notAJobError: Annotation<string | null>(),
+});
+
+type JobMatchState = typeof JobMatchGraphAnnotation.State;
+
+async function extractJobNode(state: JobMatchState): Promise<Partial<JobMatchState>> {
+  const extraction = await extractJob(state.jd);
+  if (extraction && !extraction.data.isJobPosting) {
+    return {
+      extraction,
+      notAJobError: "Teks ini kayaknya bukan lowongan kerja. Coba tempel deskripsi lowongan ya.",
+    };
+  }
+  return { extraction, notAJobError: null };
+}
+
+async function scoreJobNode(state: JobMatchState): Promise<Partial<JobMatchState>> {
+  if (!state.extraction) {
+    return {
+      baseResult: mockJobMatch(state.jd, state.projects, state.ownerName),
+    };
+  }
+  if (state.notAJobError) {
+    return {};
+  }
+
+  const s = scoreJob(state.extraction.data);
+  const baseResult = buildJobMatchResult(state.extraction.data, s, state.projects, state.ownerName);
+  return { scoreResult: s, baseResult };
+}
+
+const jobMatchCompiledGraph = new StateGraph(JobMatchGraphAnnotation)
+  .addNode("extract", extractJobNode)
+  .addNode("score", scoreJobNode)
+  .addEdge(START, "extract")
+  .addEdge("extract", "score")
+  .addEdge("score", END)
+  .compile();
+
+export async function runJobMatchGraph(params: {
+  jd: string;
+  projects: Project[];
+  ownerName: string;
+}): Promise<{ result?: JobMatchResult; notAJobError?: string; model?: string }> {
+  const finalState = await jobMatchCompiledGraph.invoke({
+    jd: params.jd,
+    projects: params.projects,
+    ownerName: params.ownerName,
+    extraction: null,
+    scoreResult: null,
+    baseResult: null,
+    notAJobError: null,
+  });
+
+  if (finalState.notAJobError) {
+    return { notAJobError: finalState.notAJobError };
+  }
+
+  return {
+    result: finalState.baseResult ?? mockJobMatch(params.jd, params.projects, params.ownerName),
+    model: finalState.extraction?.model,
+  };
 }

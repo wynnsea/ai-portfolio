@@ -9,8 +9,7 @@ import { DemoBadge } from "@/components/ai/typewriter";
 import { getPublicPosts, getPublicProjects } from "@/lib/public-api";
 import { buildSearchIndex } from "@/lib/ai/search-index";
 
-// DEMO: pencarian kata kunci + sinonim sederhana, meniru pencarian semantik.
-// Versi asli: embed query & dokumen pakai API embeddings lalu urutkan berdasarkan kemiripan.
+// Pencarian lokal instan + pencarian semantik RAG berbasis embeddings (/api/search).
 const SYNONYMS: Record<string, string[]> = {
   chatbot: ["llm", "chat", "tutor", "rag"],
   chat: ["llm", "tutor"],
@@ -57,9 +56,10 @@ function score(item: SearchItem, query: string) {
   return total;
 }
 
-/** Pencarian ⌘K / Ctrl+K untuk project, artikel, dan section. */
+/** Pencarian ⌘K / Ctrl+K untuk project, artikel, dan section (Hybrid Local + RAG Embeddings). */
 export function CommandPalette({ items }: { items: SearchItem[] }) {
   const [searchItems, setSearchItems] = useState(items);
+  const [semanticResults, setSemanticResults] = useState<SearchItem[] | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -69,32 +69,79 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
   const lenis = useLenis();
 
   useEffect(() => {
-    let active = true;
+    let activeFlag = true;
     Promise.all([getPublicProjects(), getPublicPosts()])
       .then(([projects, posts]) => {
-        if (active) setSearchItems(buildSearchIndex(projects, posts));
+        if (activeFlag) setSearchItems(buildSearchIndex(projects, posts));
       })
       .catch((error: unknown) => {
         console.error("Gagal memuat indeks pencarian portfolio dari API.", error);
       });
     return () => {
-      active = false;
+      activeFlag = false;
     };
   }, []);
 
+  // Panggil pencarian semantik RAG di server saat user mengetik
+  useEffect(() => {
+    if (!open) return;
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setSemanticResults(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: trimmed }),
+        signal: controller.signal,
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { items?: SearchItem[] } | null) => {
+          if (data?.items) {
+            setSemanticResults(data.items);
+          }
+        })
+        .catch(() => {
+          // Abaikan abort atau fallback ke hasil lokal
+        });
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [open, query]);
+
   const results = useMemo(() => {
     if (!query.trim()) return searchItems.filter((i) => i.type !== "Blog").slice(0, 6);
-    return searchItems
+    const local = searchItems
       .map((item) => ({ item, s: score(item, query) }))
       .filter((r) => r.s > 0)
       .sort((a, b) => b.s - a.s)
       .slice(0, 8)
       .map((r) => r.item);
-  }, [searchItems, query]);
+
+    if (!semanticResults || semanticResults.length === 0) return local;
+
+    // Gabungkan hasil instan lokal dengan hasil semantik RAG tanpa duplikat href
+    const merged: SearchItem[] = [];
+    const seen = new Set<string>();
+    for (const item of [...local, ...semanticResults]) {
+      if (seen.has(item.href)) continue;
+      seen.add(item.href);
+      merged.push(item);
+    }
+    return merged.slice(0, 8);
+  }, [searchItems, semanticResults, query]);
 
   const close = () => {
     setOpen(false);
     setQuery("");
+    setSemanticResults(null);
     setActive(0);
   };
 
@@ -176,7 +223,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
                   }
                   if (e.key === "Enter" && results[active]) go(results[active]);
                 }}
-                placeholder={'Coba "proyek pakai kamera" atau "tulisan soal jepang"'}
+                placeholder={'Coba "sistem rekrutmen minori" atau "sertifikat bahasa jepang"'}
                 aria-label="Kata kunci pencarian"
                 className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-secondary"
               />

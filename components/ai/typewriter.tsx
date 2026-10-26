@@ -1,21 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Menampilkan teks seolah sedang diketik (meniru streaming dari LLM).
  * Pasang `key` berbeda untuk setiap teks baru agar animasinya mulai ulang.
  */
-export function Typewriter({ text, speed = 14 }: { text: string; speed?: number }) {
+export function Typewriter({
+  text,
+  speed = 14,
+  onDone,
+}: {
+  text: string;
+  speed?: number;
+  onDone?: () => void;
+}) {
   const [count, setCount] = useState(0);
   const done = count >= text.length;
+  const notifiedRef = useRef(false);
 
   useEffect(() => {
-    if (done) return;
+    if (done) {
+      if (!notifiedRef.current) {
+        notifiedRef.current = true;
+        onDone?.();
+      }
+      return;
+    }
     // Ketik beberapa karakter sekaligus supaya teks panjang tidak terlalu lama
     const t = setTimeout(() => setCount((c) => Math.min(text.length, c + 2)), speed);
     return () => clearTimeout(t);
-  }, [count, done, speed, text.length]);
+  }, [count, done, onDone, speed, text.length]);
 
   return (
     <>
@@ -36,8 +51,8 @@ export function ThinkingDots({ label = "SEA AI lagi mikir" }: { label?: string }
   );
 }
 
-/** Label kecil penanda fitur AI (default: masih versi demo). */
-export function DemoBadge({ className = "", label = "Demo AI" }: { className?: string; label?: string }) {
+/** Label kecil penanda fitur AI. */
+export function DemoBadge({ className = "", label = "SEA AI" }: { className?: string; label?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border border-current/20 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] opacity-70 ${className}`}>
       <span className="font-jp text-xs normal-case tracking-normal">海</span> {label}

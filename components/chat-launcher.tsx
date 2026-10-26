@@ -22,11 +22,17 @@ const suggestions = [
   "Saya rekruter, cocok gak?",
 ];
 
-type Message = { id: number; role: "user" | "assistant"; text: string; action?: SeaAction };
+type Message = {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  action?: SeaAction;
+  typed?: boolean;
+};
 
-const greeting: Message = { id: 0, role: "assistant", text: "" };
+const greeting: Message = { id: 0, role: "assistant", text: "", typed: true };
 
-/** Tombol mengambang + panel chat SEA AI (versi demo, jawaban dari /api/sea). */
+/** Tombol mengambang + panel chat SEA AI. */
 export function ChatLauncher() {
   const { done } = useIntro();
   const settings = useSiteSettings();
@@ -40,9 +46,22 @@ export function ChatLauncher() {
   const pathname = usePathname();
   const lenis = useLenis();
 
+  function markAllTyped() {
+    setMessages((prev) => (prev.some((m) => !m.typed) ? prev.map((m) => (m.typed ? m : { ...m, typed: true })) : prev));
+  }
+
+  function markMessageTyped(id: number) {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, typed: true } : m)));
+  }
+
+  function closePanel() {
+    markAllTyped();
+    setOpen(false);
+  }
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closePanel();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
@@ -68,18 +87,37 @@ export function ChatLauncher() {
     const message = text.trim();
     if (!message || loading) return;
     setInput("");
-    setMessages((m) => [...m, { id: nextId.current++, role: "user", text: message }]);
+    const history = messages
+      .filter((m) => m.id !== 0 && m.text.trim().length > 0)
+      .slice(-6)
+      .map((m) => ({ role: m.role, text: m.text }));
+
+    setMessages((m) => [
+      ...m.map((item) => (item.typed ? item : { ...item, typed: true })),
+      { id: nextId.current++, role: "user", text: message, typed: true },
+    ]);
     setLoading(true);
     try {
       const res = await fetch("/api/sea", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, history }),
       });
       const data: SeaReply = await res.json();
-      setMessages((m) => [...m, { id: nextId.current++, role: "assistant", text: data.reply, action: data.action }]);
+      setMessages((m) => [
+        ...m,
+        { id: nextId.current++, role: "assistant", text: data.reply, action: data.action, typed: false },
+      ]);
     } catch {
-      setMessages((m) => [...m, { id: nextId.current++, role: "assistant", text: "Waduh, koneksinya lagi bermasalah. Coba lagi bentar ya." }]);
+      setMessages((m) => [
+        ...m,
+        {
+          id: nextId.current++,
+          role: "assistant",
+          text: "Waduh, koneksinya lagi bermasalah. Coba lagi bentar ya.",
+          typed: false,
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -93,7 +131,7 @@ export function ChatLauncher() {
       router.push(action.href);
     }
     // Di layar kecil, tutup panel supaya halaman tujuan kelihatan
-    if (window.innerWidth < 768) setOpen(false);
+    if (window.innerWidth < 768) closePanel();
   }
 
   if (!settings.features.chatbot) return null;
@@ -121,11 +159,11 @@ export function ChatLauncher() {
                 <div>
                   <p className="text-sm font-medium">SEA AI</p>
                   <p className="flex items-center gap-1.5 text-xs text-white/50">
-                    <span className="size-1.5 rounded-full bg-accent" /> Online · versi demo
+                    <span className="size-1.5 rounded-full bg-accent" /> Online
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Tutup chat" className="grid size-8 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white">
+              <button type="button" onClick={closePanel} aria-label="Tutup chat" className="grid size-8 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white">
                 ✕
               </button>
             </div>
@@ -139,7 +177,13 @@ export function ChatLauncher() {
                 ) : (
                   <div key={m.id} className="max-w-[88%] space-y-2">
                     <div className="rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3 text-sm leading-relaxed">
-                      {m.id === 0 ? `こんにちは! Saya SEA AI, asisten pribadinya ${settings.name}. Mau tau soal proyek, keahlian, pengalaman, atau cara ngontak dia? Tanya aja!` : <Typewriter text={m.text} />}
+                      {m.id === 0 ? (
+                        `こんにちは! Saya SEA AI, asisten pribadinya ${settings.name}. Mau kepoin proyek, keahlian, pengalaman, atau cara ngontak bos saya? Tanya aja!`
+                      ) : m.typed ? (
+                        m.text
+                      ) : (
+                        <Typewriter text={m.text} onDone={() => markMessageTyped(m.id)} />
+                      )}
                     </div>
                     {m.action && (
                       <button
@@ -207,7 +251,10 @@ export function ChatLauncher() {
 
       <motion.button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (open) closePanel();
+          else setOpen(true);
+        }}
         aria-expanded={open}
         aria-controls="sea-ai-panel"
         aria-label={open ? "Tutup chat SEA AI" : "Buka chat SEA AI"}

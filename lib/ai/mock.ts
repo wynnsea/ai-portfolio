@@ -46,14 +46,14 @@ export function mockSeaReply(
   });
   if (project) {
     return {
-      reply: `${project.title} itu ${thirdPerson(lowerFirst(project.summary), name)} Di project ini ${name} jadi ${project.role} selama ${project.duration}, pakai ${project.stack.slice(0, 3).join(", ")}, dan lain-lain.`,
+      reply: `${project.title} itu ${thirdPerson(lowerFirst(project.summary), "bos saya")} Di project ini bos saya jadi ${project.role} selama ${project.duration}, pakai ${project.stack.slice(0, 3).join(", ")}, dan lain-lain.`,
       action: { type: "navigate", href: `/projects/${project.slug}`, label: `Buka ${project.title}` },
     };
   }
 
   if (has(q, ["lowongan", "recruit", "hire", "hiring", "cocok", "job", "loker", "rekrut", "kandidat"])) {
     return {
-      reply: `Kamu lagi nyari kandidat? Coba fitur Job Match: tempel deskripsi lowongannya, nanti saya cek seberapa cocok ${name} sama posisinya, lengkap sama project yang relevan.`,
+      reply: `Kamu lagi nyari kandidat? Coba fitur Job Match: tempel deskripsi lowongannya, nanti saya cek seberapa cocok bos saya sama posisinya, lengkap sama project yang relevan.`,
       action: { type: "navigate", href: "/#job-match", label: "Coba Job Match" },
     };
   }
@@ -61,7 +61,7 @@ export function mockSeaReply(
   if (has(q, ["project", "proyek", "portfolio", "portofolio", "karya", "bikin apa"])) {
     const list = projectList.map((p) => p.title).join(", ");
     return {
-      reply: `${name} udah ngerjain ${projectList.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
+      reply: `Bos saya udah ngerjain ${projectList.length} project, di antaranya ${list}. Hampir semuanya soal integrasi AI ke produk nyata, dan banyak yang nyambung sama Jepang. Mau saya tunjukin yang mana?`,
       action: { type: "navigate", href: "/#projects", label: "Lihat semua proyek" },
     };
   }
@@ -69,7 +69,7 @@ export function mockSeaReply(
   if (has(q, ["kegiatan", "organisasi", "fasilitator", "panitia", "volunteer", "relawan", "pemateri", "lomba", "aktivitas", "activit"])) {
     const roles = [...new Set(activityList.map((a) => a.role.toLowerCase()))].slice(0, 4).join(", ");
     return {
-      reply: `Di luar kerjaan, ${name} aktif di ${activityList.length} kegiatan${activityList.length ? `, misalnya jadi ${roles}. Salah satunya ${activityList[0].title} sebagai ${activityList[0].role.toLowerCase()}.` : "."}`,
+      reply: `Di luar kerjaan, bos saya aktif di ${activityList.length} kegiatan${activityList.length ? `, misalnya jadi ${roles}. Salah satunya ${activityList[0].title} sebagai ${activityList[0].role.toLowerCase()}.` : "."}`,
       action: { type: "navigate", href: "/#activities", label: "Lihat kegiatan" },
     };
   }
@@ -77,7 +77,7 @@ export function mockSeaReply(
   if (has(q, ["sertifikat", "sertifikasi", "certif", "toefl", "itep", "jlpt", "bahasa inggris", "english"])) {
     const list = certificationList.map((c) => c.title).join(", ");
     return {
-      reply: `${name} punya ${certificationList.length} sertifikasi${list ? `: ${list}` : ""}.`,
+      reply: `Bos saya punya ${certificationList.length} sertifikasi${list ? `: ${list}` : ""}.`,
       action: { type: "navigate", href: "/#certifications", label: "Lihat sertifikasi" },
     };
   }
@@ -85,14 +85,14 @@ export function mockSeaReply(
   if (has(q, ["skill", "bisa apa", "keahlian", "tech", "stack", "jago", "kemampuan"])) {
     const groups = about.skills.map((s) => `${s.group} (${s.items.slice(0, 3).join(", ")})`).join("; ");
     return {
-      reply: `Skill utama ${name} ada di tiga area: ${groups}. Fokusnya lebih ke nyambungin AI ke aplikasi, bukan training model dari nol.`,
+      reply: `Skill utama bos saya ada di tiga area: ${groups}. Fokus si bos lebih ke nyambungin AI ke aplikasi, bukan training model dari nol.`,
       action: { type: "navigate", href: "/#about", label: "Lihat detail keahlian" },
     };
   }
 
   if (has(q, ["kontak", "contact", "email", "hubungi", "linkedin", "github", "ngobrol"])) {
     return {
-      reply: `Paling gampang lewat email ke ${profile.email}. Bisa juga cek GitHub (github.com/wynnsea) atau LinkedIn-nya. ${name} biasanya fast response kok.`,
+      reply: `Paling gampang lewat email ke ${profile.email}. Bisa juga cek GitHub (github.com/wynnsea) atau LinkedIn-nya. Si bos biasanya fast response kok.`,
       action: { type: "navigate", href: "/#contact", label: "Ke bagian kontak" },
     };
   }
@@ -100,7 +100,7 @@ export function mockSeaReply(
   if (has(q, ["kerja", "pengalaman", "experience", "kantor", "karier", "karir"])) {
     const [now, before] = about.experience;
     return {
-      reply: `Sekarang ${name} kerja sebagai ${now.role} di ${now.company} (${now.period}). Sebelumnya dia jadi ${before.role} di ${before.company} (${before.period}), dan dari situ dia kebiasaan selalu mikirin sisi pengguna.`,
+      reply: `Sekarang bos saya kerja sebagai ${now.role} di ${now.company} (${now.period}). Sebelumnya dia jadi ${before.role} di ${before.company} (${before.period}), dan dari situ dia kebiasaan selalu mikirin sisi pengguna.`,
       action: { type: "navigate", href: "/#about", label: "Lihat pengalaman" },
     };
   }
@@ -108,14 +108,14 @@ export function mockSeaReply(
   if (has(q, ["kuliah", "pendidikan", "takumi", "lulus", "kampus", "education"])) {
     const e = about.education;
     return {
-      reply: `${name} lulusan ${e.degree} di ${e.school} (${e.period}). Selama kuliah dia juga ikut program industri seperti Nusantara Data Center Academy dan Learning Factory PT Minori.`,
+      reply: `Bos saya lulusan ${e.degree} di ${e.school} (${e.period}). Selama kuliah dia juga ikut program industri seperti Nusantara Data Center Academy dan Learning Factory PT Minori.`,
       action: { type: "navigate", href: "/#about", label: "Lihat pendidikan" },
     };
   }
 
   if (has(q, ["jepang", "japan", "nihongo", "anime", "jlpt", "kanji"])) {
     return {
-      reply: `Yap, ${name} suka banget sama budaya Jepang! Dia udah lulus JLPT N4, pernah jadi fasilitator di Bunkasai, dan bikin Minori AI RCR, sistem rekrutmen berbasis AI untuk PT Minori.`,
+      reply: `Yap, bos saya suka banget sama budaya Jepang! Dia udah lulus JLPT N4, pernah jadi fasilitator di Bunkasai, dan bikin Minori AI RCR, sistem rekrutmen berbasis AI untuk PT Minori.`,
       action: { type: "navigate", href: "/#certifications", label: "Lihat sertifikat JLPT" },
     };
   }
