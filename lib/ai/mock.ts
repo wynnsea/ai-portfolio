@@ -90,6 +90,13 @@ export function mockSeaReply(
     };
   }
 
+  if (has(q, ["admin", "panel admin", "halaman admin", "login admin", "dashboard admin", "cms", "backoffice"])) {
+    return {
+      reply: "Website ini adalah web portofolio publik milik bos saya untuk nampilin karya, proyek integrasi AI, dan artikelnya. Kalau mau diskusi proyek, ngobrol santai, atau kerja sama bareng si bos, kamu bisa langsung hubungi lewat form kontak di bawah atau via email ya!",
+      action: { type: "navigate", href: "/#contact", label: "Hubungi bos saya" },
+    };
+  }
+
   if (has(q, ["kontak", "contact", "email", "hubungi", "linkedin", "github", "ngobrol"])) {
     return {
       reply: `Paling gampang lewat email ke ${profile.email}. Bisa juga cek GitHub (github.com/wynnsea) atau LinkedIn-nya. Si bos biasanya fast response kok.`,
@@ -136,7 +143,7 @@ export function mockSeaReply(
   }
 
   return {
-    reply: `Hmm, saya masih versi demo jadi belum ngerti semua pertanyaan. Coba tanya soal proyek, keahlian, pengalaman kerja, pendidikan, atau kontak ${name} ya!`,
+    reply: `Hmm, saya belum paham pertanyaan itu nih. Coba tanya soal proyek, keahlian, pengalaman kerja, pendidikan, atau kontak bos saya ya!`,
   };
 }
 

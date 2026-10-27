@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { CheckCircle2, AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronDown, Search, X } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const noopSubscribe = () => () => {};
@@ -21,7 +21,7 @@ export function AdminBackground() {
 
 /* ---------- Kartu kaca ---------- */
 export function Card({ className = "", children }: { className?: string; children: React.ReactNode }) {
-  return <div className={`ad-glass rounded-3xl ${className}`}>{children}</div>;
+  return <div className={`ad-glass min-w-0 rounded-3xl ${className}`}>{children}</div>;
 }
 
 /* ---------- Tombol ---------- */
@@ -115,7 +115,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             transition={{ duration: 0.35, ease }}
             className={`ad-glass flex max-h-[92svh] w-full flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl ${size === "lg" ? "sm:max-w-2xl" : "sm:max-w-lg"}`}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-white/70 px-6 py-5">
+            <div className="flex items-start justify-between gap-4 border-b border-white/70 px-4 py-4 sm:px-6 sm:py-5">
               <div>
                 <h2 className="text-lg font-semibold text-ad-ink">{title}</h2>
                 {description && <p className="mt-0.5 text-sm text-ad-muted">{description}</p>}
@@ -124,8 +124,8 @@ export function Modal({ open, onClose, title, description, children, footer, siz
                 <X className="size-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-            {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-white/70 bg-white/40 px-6 py-4">{footer}</div>}
+            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">{children}</div>
+            {footer && <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/70 bg-white/40 px-4 py-3 sm:px-6 sm:py-4">{footer}</div>}
           </motion.div>
         </motion.div>
       )}
@@ -156,24 +156,175 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea rows={4} {...props} className={`${inputBase} resize-none py-3 ${props.className ?? ""}`} />;
 }
 
-export function Select({ options, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { options: string[] }) {
+export type SelectProps = {
+  options: string[];
+  value?: string;
+  onChange?: (e: { target: { value: string; name?: string } }) => void;
+  placeholder?: string;
+  name?: string;
+  disabled?: boolean;
+  className?: string;
+  size?: "sm" | "md";
+  "aria-label"?: string;
+};
+
+export function Select({
+  options,
+  value,
+  onChange,
+  placeholder = "Pilih opsi...",
+  name,
+  disabled = false,
+  className = "",
+  size = "md",
+  "aria-label": ariaLabel,
+}: SelectProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Tutup dropdown saat klik di luar atau tekan ESC
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  // Auto-focus search input jika opsi > 20
+  useEffect(() => {
+    if (open && options.length > 20 && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [open, options.length]);
+
+  const hasSearch = options.length > 20;
+  const filteredOptions = hasSearch && search.trim()
+    ? options.filter((opt) => opt.toLowerCase().includes(search.toLowerCase()))
+    : options;
+
+  const handleSelect = (opt: string) => {
+    onChange?.({ target: { value: opt, name } });
+    setOpen(false);
+    setSearch("");
+  };
+
+  const isSmall = size === "sm";
+
   return (
-    // Properti background ditulis inline: shorthand `background` milik .ad-glass-soft menimpa utilitas bg-*
-    <select {...props} className={`${inputBase} h-11 appearance-none pr-10 ${props.className ?? ""}`}
-      style={{
-        backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a7a9c' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "16px",
-        backgroundPosition: "right 1rem center",
-        backgroundColor: "rgb(255 255 255 / 0.6)",
-      }}
-    >
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
+    <div ref={containerRef} className={`relative inline-block w-full ${className}`}>
+      {/* Tombol Trigger Select */}
+      <button
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel || placeholder}
+        onClick={() => setOpen((prev) => !prev)}
+        className={`ad-glass-soft flex w-full items-center justify-between gap-2 text-left text-ad-ink outline-none ring-1 ring-ad-line/80 transition hover:bg-white/90 focus:border-ad focus:ring-4 focus:ring-ad/15 disabled:cursor-not-allowed disabled:opacity-50 ${
+          isSmall ? "h-9 rounded-xl px-3 text-xs" : "h-11 rounded-2xl px-4 text-sm"
+        }`}
+      >
+        <span className={`truncate ${!value ? "text-ad-muted" : "font-medium"}`}>
+          {value || placeholder}
+        </span>
+        <ChevronDown
+          className={`size-4 shrink-0 text-ad-muted transition-transform duration-200 ${
+            open ? "rotate-180 text-ad" : ""
+          }`}
+        />
+      </button>
+
+      {/* Dropdown Menu Mengambang */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-0 top-[calc(100%+6px)] z-50 w-full min-w-[140px] overflow-hidden rounded-2xl bg-white/95 p-1.5 shadow-xl ring-1 ring-ad-line/80 backdrop-blur-xl"
+            style={{ maxHeight: hasSearch ? "300px" : "240px" }}
+          >
+            {/* Input Pencarian jika opsi > 20 */}
+            {hasSearch && (
+              <div className="mb-1.5 border-b border-ad-line/60 p-1">
+                <div className="flex items-center gap-2 rounded-xl bg-ad-soft/60 px-2.5 py-1.5 text-xs ring-1 ring-ad-line/40">
+                  <Search className="size-3.5 shrink-0 text-ad-muted" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Cari opsi..."
+                    className="w-full bg-transparent text-xs text-ad-ink placeholder:text-ad-muted outline-none"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="text-ad-muted hover:text-ad-ink"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Daftar Opsi */}
+            <ul
+              role="listbox"
+              className="max-h-48 overflow-y-auto space-y-0.5 pr-0.5 text-xs sm:text-sm"
+            >
+              {filteredOptions.length === 0 ? (
+                <li className="px-3 py-3 text-center text-xs text-ad-muted">
+                  Tidak ada opsi yang cocok
+                </li>
+              ) : (
+                filteredOptions.map((opt) => {
+                  const isSelected = opt === value;
+                  return (
+                    <li key={opt} role="option" aria-selected={isSelected}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(opt)}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs sm:text-sm transition ${
+                          isSelected
+                            ? "bg-ad-soft/90 font-semibold text-ad-deep ring-1 ring-ad/20"
+                            : "text-ad-ink hover:bg-ad-soft/40 hover:text-ad-deep"
+                        }`}
+                      >
+                        <span className="truncate">{opt}</span>
+                        {isSelected && <Check className="size-3.5 shrink-0 text-ad ml-2" />}
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -232,12 +383,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 /* ---------- Judul halaman ---------- */
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-ad-ink md:text-4xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm text-ad-muted">{description}</p>}
+    <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold tracking-tight text-ad-ink sm:text-3xl md:text-4xl">{title}</h1>
+        {description && <p className="mt-1 text-xs text-ad-muted sm:text-sm leading-relaxed">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">{actions}</div>}
     </div>
   );
 }

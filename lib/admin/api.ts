@@ -241,7 +241,7 @@ export async function getRow(resource: Resource, id: number): Promise<Row> {
   const { table } = resources[resource];
   let record = check(await db().from(table).select("*").eq("id", id).single()) as Record<string, unknown>;
 
-  // Pesan baru otomatis ditandai sudah dibaca saat dibuka
+  // Pesan otomatis ditandai sebagai 'Dibaca' saat dibuka / di-view
   if (resource === "pesan" && record.status === "Baru") {
     record = check(await db().from(table).update({ status: "Dibaca" }).eq("id", id).select().single()) as Record<string, unknown>;
     notifyDashboardRefresh();

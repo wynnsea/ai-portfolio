@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import type { SearchItem } from "@/lib/ai/types";
-import { DemoBadge } from "@/components/ai/typewriter";
+import { AiBadge } from "@/components/ai/typewriter";
 import { getPublicPosts, getPublicProjects } from "@/lib/public-api";
 import { buildSearchIndex } from "@/lib/ai/search-index";
 
@@ -253,7 +253,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
 
             <div className="flex items-center justify-between border-t border-line px-5 py-3 text-xs text-secondary">
               <span>↑↓ pilih · ↵ buka</span>
-              <DemoBadge />
+              <AiBadge />
             </div>
           </motion.div>
         </motion.div>

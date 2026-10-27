@@ -51,11 +51,13 @@ export function ThinkingDots({ label = "SEA AI lagi mikir" }: { label?: string }
   );
 }
 
-/** Label kecil penanda fitur AI. */
-export function DemoBadge({ className = "", label = "SEA AI" }: { className?: string; label?: string }) {
+/** Label penanda fitur SEA AI. */
+export function AiBadge({ className = "", label = "SEA AI" }: { className?: string; label?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border border-current/20 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] opacity-70 ${className}`}>
       <span className="font-jp text-xs normal-case tracking-normal">海</span> {label}
     </span>
   );
 }
+
+export const DemoBadge = AiBadge;

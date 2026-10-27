@@ -10,7 +10,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { ProjectCover } from "@/components/projects/project-cover";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { ContactFooter } from "@/components/contact-footer";
-import { PageSkeleton } from "@/components/page-skeleton";
+import { BlogDetailSkeleton } from "@/components/page-skeleton";
 import { TldrBox } from "@/components/ai/tldr-box";
 
 export const instant = false;
@@ -185,7 +185,7 @@ export default function BlogPostPage({ params }: PageProps<"/blog/[slug]">) {
   return (
     <>
       <ReadingProgress />
-      <Suspense fallback={<PageSkeleton />}>
+      <Suspense fallback={<BlogDetailSkeleton />}>
         <PostContent params={params} />
       </Suspense>
     </>

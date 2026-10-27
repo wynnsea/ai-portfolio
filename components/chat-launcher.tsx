@@ -8,7 +8,7 @@ import { useLenis } from "lenis/react";
 import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import type { SeaAction, SeaReply } from "@/lib/ai/types";
 import { useIntro } from "@/components/providers/intro-provider";
-import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
+import { AiBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 // Dipakai bersama oleh panel chat dan putaran logo, supaya buka/tutup & putaran selalu selaras
@@ -198,8 +198,13 @@ export function ChatLauncher() {
                 ),
               )}
               {loading && (
-                <div className="w-fit rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3.5 text-secondary">
-                  <ThinkingDots />
+                <div className="w-[82%] max-w-[260px] space-y-2 rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3 text-secondary animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <ThinkingDots />
+                    <span className="text-[11px] text-secondary/70">SEA AI lagi ngetik...</span>
+                  </div>
+                  <div className="h-2.5 w-5/6 rounded-full bg-line/60" />
+                  <div className="h-2.5 w-3/5 rounded-full bg-line/40" />
                 </div>
               )}
               {messages.length === 1 && (
@@ -243,7 +248,7 @@ export function ChatLauncher() {
               </button>
             </form>
             <div className="flex justify-center pb-2 text-secondary">
-              <DemoBadge />
+              <AiBadge />
             </div>
           </motion.div>
         )}

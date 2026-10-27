@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/site-url";
@@ -12,6 +12,12 @@ const interTight = Inter_Tight({
 });
 
 const seoName = "Wayan Deva Adhisthanaya";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,

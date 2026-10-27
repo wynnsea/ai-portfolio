@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { DemoBadge, ThinkingDots } from "@/components/ai/typewriter";
+import { AiBadge, ThinkingDots } from "@/components/ai/typewriter";
 
-/** Ringkasan artikel buatan AI (versi demo, dari /api/tldr). */
+/** Ringkasan artikel buatan AI (dari /api/tldr). */
 export function TldrBox({ slug }: { slug: string }) {
   const [points, setPoints] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export function TldrBox({ slug }: { slug: string }) {
     <div className="rounded-2xl border border-line p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs uppercase tracking-[0.25em] text-secondary">TL;DR</p>
-        <DemoBadge className="text-secondary" />
+        <AiBadge className="text-secondary" />
       </div>
 
       {!points && (
@@ -42,6 +42,20 @@ export function TldrBox({ slug }: { slug: string }) {
           >
             {loading ? <ThinkingDots label="Lagi ngeringkas" /> : "Ringkasin dong"}
           </button>
+        </div>
+      )}
+
+      {loading && !points && (
+        <div className="mt-6 space-y-3 animate-pulse" aria-busy="true" aria-label="Menyiapkan ringkasan">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="size-2 rounded-full bg-primary/40 shrink-0" />
+              <div
+                style={{ width: i === 0 ? "90%" : i === 1 ? "80%" : "65%" }}
+                className="h-4 rounded-full bg-primary/15"
+              />
+            </div>
+          ))}
         </div>
       )}
 

@@ -2,6 +2,7 @@ import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import type { SiteSettings } from "@/lib/public-api";
 import { Wave } from "@/components/wave";
+import { ContactForm } from "@/components/contact-form";
 
 export function ContactFooter({ settings }: { settings: SiteSettings }) {
   return (
@@ -17,35 +18,60 @@ export function ContactFooter({ settings }: { settings: SiteSettings }) {
         <Reveal>
           <p className="mb-6 text-xs uppercase tracking-[0.25em] text-accent">08 / Kontak</p>
         </Reveal>
-        <Reveal delay={0.1}>
-          <h2 className="max-w-4xl text-[clamp(2.5rem,7vw,6rem)] font-light leading-[1.02] tracking-[-0.05em]">
-            Punya ide seru? Yuk bikin sesuatu yang pinter bareng.
-          </h2>
-        </Reveal>
-        <Reveal delay={0.2} className="mt-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <a
-            href={`mailto:${settings.email}`}
-            className="w-fit border-b border-white/40 pb-1 text-xl transition-colors hover:border-white md:text-2xl"
-          >
-            {settings.email} <span aria-hidden>↗</span>
-          </a>
-          <ul className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-            {settings.socials.map((s) => (
-              <li key={s.label}>
-                <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-white/60 transition-colors hover:text-white">
-                  {s.label} <span aria-hidden>↗</span>
+
+        <div className="grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-16">
+          {/* Kolom Kiri: Headline & Info Kontak */}
+          <div className="lg:col-span-6">
+            <Reveal delay={0.1}>
+              <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-light leading-[1.05] tracking-[-0.05em]">
+                Punya ide seru? Yuk bikin sesuatu yang pinter bareng.
+              </h2>
+            </Reveal>
+
+            <Reveal delay={0.2} className="mt-8 space-y-6">
+              <p className="text-sm leading-relaxed text-white/70">
+                Tertarik kolaborasi integrasi AI, ngobrolin lowongan kerja, atau sekadar bertukar pikiran? Tinggalkan pesan di samping atau hubungi langsung via email.
+              </p>
+              <div>
+                <span className="block text-xs uppercase tracking-widest text-white/40">Email Langsung</span>
+                <a
+                  href={`mailto:${settings.email}`}
+                  className="mt-1 inline-block border-b border-white/40 pb-1 text-xl transition-colors hover:border-white md:text-2xl"
+                >
+                  {settings.email} <span aria-hidden>↗</span>
                 </a>
-              </li>
-            ))}
-            {settings.cvUrl && (
-              <li>
-                <a href={settings.cvUrl} download className="text-white/60 transition-colors hover:text-white">
-                  Download CV <span aria-hidden>↓</span>
-                </a>
-              </li>
-            )}
-          </ul>
-        </Reveal>
+              </div>
+
+              <div>
+                <span className="mb-2 block text-xs uppercase tracking-widest text-white/40">Tautan & Media Sosial</span>
+                <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                  {settings.socials.map((s) => (
+                    <li key={s.label}>
+                      <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-white/60 transition-colors hover:text-white">
+                        {s.label} <span aria-hidden>↗</span>
+                      </a>
+                    </li>
+                  ))}
+                  {settings.cvUrl && (
+                    <li>
+                      <a href={settings.cvUrl} download className="text-white/60 transition-colors hover:text-white">
+                        Download CV <span aria-hidden>↓</span>
+                      </a>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Kolom Kanan: Form Kirim Pesan */}
+          <div className="lg:col-span-6">
+            <Reveal delay={0.2}>
+              <ContactForm />
+            </Reveal>
+          </div>
+        </div>
+
         <div className="mt-24 flex flex-col justify-between gap-2 border-t border-white/10 pt-6 text-xs text-white/40 md:flex-row">
           <span className="font-semibold tracking-[0.3em] text-white/70">{settings.brand}</span>
           <span>

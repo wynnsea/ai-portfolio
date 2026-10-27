@@ -99,7 +99,7 @@ export function Hero({
           style={{ y: textY, opacity: textOpacity }}
           className="order-1 flex flex-col justify-center lg:order-2 lg:pb-16"
         >
-          {/* {site.availability.open && (
+          {settings.availability?.open && (
             <motion.p
               variants={fadeUp}
               custom={0.5}
@@ -111,10 +111,12 @@ export function Hero({
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent" />
                 <span className="relative inline-flex size-2 rounded-full bg-primary" />
               </span>
-              <span className="font-medium">{site.availability.label}</span>
-              <span className="text-secondary">· {site.availability.detail}</span>
+              <span className="font-medium">{settings.availability.label || "Siap bekerja"}</span>
+              {settings.availability.detail && (
+                <span className="text-secondary">· {settings.availability.detail}</span>
+              )}
             </motion.p>
-          )} */}
+          )}
 
           <motion.div variants={fadeUp} custom={0.6} initial="hidden" animate={state} className="mb-8 flex gap-10 lg:mb-10">
             {[

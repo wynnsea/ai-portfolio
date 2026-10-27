@@ -8,7 +8,7 @@ import { ParallaxMedia } from "@/components/motion/parallax-media";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCover } from "@/components/projects/project-cover";
 import { ContactFooter } from "@/components/contact-footer";
-import { PageSkeleton } from "@/components/page-skeleton";
+import { ProjectDetailSkeleton } from "@/components/page-skeleton";
 import { ProjectExplainer } from "@/components/ai/project-explainer";
 
 export const instant = false;
@@ -259,7 +259,7 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
 export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   return (
     <>
-      <Suspense fallback={<PageSkeleton />}>
+      <Suspense fallback={<ProjectDetailSkeleton />}>
         <ProjectContent params={params} />
       </Suspense>
     </>

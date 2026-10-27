@@ -8,7 +8,6 @@ import { ActivitiesSection } from "@/components/activities/activities-section";
 import { BlogSection } from "@/components/blog/blog-section";
 import { JobMatchSection } from "@/components/ai/job-match-section";
 import { ContactFooter } from "@/components/contact-footer";
-import { PageSkeleton } from "@/components/page-skeleton";
 import { getPublicActivities, getPublicCertifications, getPublicPosts, getPublicProjects, getPublicSettings } from "@/lib/public-api";
 
 async function HomeContent() {
@@ -25,7 +24,7 @@ async function HomeContent() {
       <main>
         <Hero settings={settings} projectCount={projects.length} certificationCount={certifications.length} />
         <Statement />
-        <AboutSection />
+        <AboutSection settings={settings} />
         <ProjectsSection projects={projects} />
         <CertificationsSection certifications={certifications} />
         <ActivitiesSection activities={activities} />
@@ -39,7 +38,7 @@ async function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={null}>
       <HomeContent />
     </Suspense>
   );

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { JobMatchResult } from "@/lib/ai/types";
 import { Reveal } from "@/components/motion/reveal";
 import { SampleJobPicker } from "@/components/ai/sample-job-picker";
-import { DemoBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
+import { AiBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
 import { Wave } from "@/components/wave";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -104,7 +104,7 @@ export function JobMatchSection() {
       <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
         <Reveal>
           <p className="mb-6 flex items-center gap-4 text-xs uppercase tracking-[0.25em] text-secondary">
-            07 / Untuk Rekruter <DemoBadge label="SEA AI" />
+            07 / Untuk Rekruter <AiBadge label="SEA AI" />
           </p>
         </Reveal>
         <Reveal delay={0.1} className="flex flex-col gap-6 border-b border-line pb-10 md:flex-row md:items-end md:justify-between">
@@ -157,9 +157,43 @@ export function JobMatchSection() {
                 )}
 
                 {status === "loading" && (
-                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="m-auto text-center">
-                    <ThinkingDots label="Sedang menganalisis" />
-                    <p className="mt-4 text-sm text-white/60">{steps[step]}</p>
+                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full space-y-6">
+                    {/* Status Step Bar */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-accent">
+                        <ThinkingDots label="Sedang menganalisis" />
+                        <span className="font-medium text-white">{steps[step]}</span>
+                      </span>
+                      <span className="text-xs text-white/40">Langkah {step + 1} dari {steps.length}</span>
+                    </div>
+
+                    {/* Shape Skeleton matching the result */}
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center animate-pulse">
+                      <div className="size-36 shrink-0 rounded-full border-[6px] border-white/20 bg-white/5" />
+                      <div className="flex-1 space-y-3">
+                        <div className="h-4 w-full rounded-full bg-white/20" />
+                        <div className="h-4 w-5/6 rounded-full bg-white/15" />
+                        <div className="h-4 w-3/4 rounded-full bg-white/10" />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-6 border-t border-white/10 pt-4 sm:grid-cols-2 animate-pulse">
+                      <div className="space-y-3">
+                        <div className="h-3 w-32 rounded-full bg-white/30" />
+                        <div className="flex flex-wrap gap-2">
+                          <div className="h-7 w-20 rounded-full bg-white/15" />
+                          <div className="h-7 w-24 rounded-full bg-white/15" />
+                          <div className="h-7 w-16 rounded-full bg-white/15" />
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="h-3 w-32 rounded-full bg-white/30" />
+                        <div className="flex flex-wrap gap-2">
+                          <div className="h-7 w-20 rounded-full bg-white/10" />
+                          <div className="h-7 w-24 rounded-full bg-white/10" />
+                        </div>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
 

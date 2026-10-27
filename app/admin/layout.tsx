@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     // `isolate`: blob latar (z-index negatif) tetap di atas latar putih <body>
-    <div className="relative isolate min-h-svh text-ad-ink">
+    <div className="relative isolate min-h-svh w-full max-w-full overflow-x-clip text-ad-ink">
       <AdminBackground />
       <ToastProvider>{children}</ToastProvider>
     </div>

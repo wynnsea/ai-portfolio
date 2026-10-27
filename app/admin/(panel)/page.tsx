@@ -1,3 +1,4 @@
+export const instant = false;
 import type { Metadata } from "next";
 import { Dashboard } from "@/components/admin/dashboard";
 

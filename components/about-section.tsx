@@ -1,4 +1,5 @@
 import { about } from "@/lib/site";
+import type { SiteSettings } from "@/lib/public-api";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { Wave } from "@/components/wave";
@@ -6,7 +7,14 @@ import { Wave } from "@/components/wave";
 // Offset parallax berbeda untuk tiap kartu minat agar susunannya terasa hidup
 const interestOffsets = [40, -50, 70, -30];
 
-export function AboutSection() {
+export function AboutSection({ settings }: { settings?: SiteSettings } = {}) {
+  const name = settings?.name || "Wayan";
+  const role = settings?.role || "Junior AI engineer";
+  const story = [
+    `Haii, saya ${name}! ${role} lulusan D3 Teknologi Informasi Politeknik Takumi. Saya bukan tipe yang bikin model AI dari nol. Yang saya suka itu integrasinya: ambil model yang udah keren, terus dirakit jadi produk yang beneran nyelesain masalah.`,
+    about.story[1] || "",
+  ];
+
   return (
     <section id="about" className="relative overflow-hidden bg-tertiary py-28 md:py-40">
       <Wave from="white" />
@@ -28,7 +36,7 @@ export function AboutSection() {
 
         <div className="mt-16 grid gap-16 md:grid-cols-12 md:gap-10">
           <div className="space-y-8 md:col-span-7">
-            {about.story.map((p, i) => (
+            {story.map((p, i) => (
               <Reveal key={i} delay={i * 0.1}>
                 <p className={i === 0 ? "text-2xl font-light leading-snug tracking-tight md:text-3xl" : "text-base leading-relaxed text-secondary md:text-lg"}>
                   {p}
