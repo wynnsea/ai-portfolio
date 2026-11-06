@@ -22,7 +22,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   title: {
-    default: `${seoName} (${site.brand}) | ${site.role}`,
+    // Judul tab browser cukup nama brand; halaman lain jadi "Judul | Wynnsea"
+    default: site.brand,
     template: `%s | ${site.brand}`,
   },
   description: `${seoName}, dikenal juga dengan nama ${site.brand}. Portfolio resmi dan profil profesional Wayan Deva Adhisthanaya.`,

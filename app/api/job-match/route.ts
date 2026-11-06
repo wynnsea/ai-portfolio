@@ -1,9 +1,15 @@
+import { limitAiRequest, type RateLimitRule } from "@/lib/rate-limit";
 import { runJobMatchGraph } from "@/lib/ai/job-match";
 import { getPublicProjects, getPublicSettings } from "@/lib/public-api";
 import { projects as fallbackProjects } from "@/lib/projects";
 import { site } from "@/lib/site";
 
+const RATE_LIMIT: RateLimitRule = { name: "job-match", limit: 5, windowSeconds: 60 * 60 };
+
 export async function POST(request: Request) {
+  const limited = await limitAiRequest(request, RATE_LIMIT);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const jd = typeof body?.jd === "string" ? body.jd.slice(0, 6000) : "";
   if (jd.trim().length < 20) {

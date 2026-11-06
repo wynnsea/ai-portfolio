@@ -1,8 +1,14 @@
+import { limitAiRequest, type RateLimitRule } from "@/lib/rate-limit";
 import { runBlogTldrGraph } from "@/lib/ai/workflows";
 import { getPublicPost } from "@/lib/public-api";
 import { getPost } from "@/lib/posts";
 
+const RATE_LIMIT: RateLimitRule = { name: "tldr", limit: 10, windowSeconds: 60 * 60 };
+
 export async function POST(request: Request) {
+  const limited = await limitAiRequest(request, RATE_LIMIT);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const slug = typeof body?.slug === "string" ? body.slug : null;
   if (!slug) {

@@ -59,7 +59,8 @@ function score(item: SearchItem, query: string) {
 /** Pencarian ⌘K / Ctrl+K untuk project, artikel, dan section (Hybrid Local + RAG Embeddings). */
 export function CommandPalette({ items }: { items: SearchItem[] }) {
   const [searchItems, setSearchItems] = useState(items);
-  const [semanticResults, setSemanticResults] = useState<SearchItem[] | null>(null);
+  // Hasil semantik disimpan bersama query-nya, jadi hasil lama otomatis diabaikan saat query berubah
+  const [semantic, setSemantic] = useState<{ query: string; items: SearchItem[] } | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -86,10 +87,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
   useEffect(() => {
     if (!open) return;
     const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setSemanticResults(null);
-      return;
-    }
+    if (trimmed.length < 2) return;
 
     const controller = new AbortController();
     const timer = setTimeout(() => {
@@ -102,7 +100,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
         .then((res) => (res.ok ? res.json() : null))
         .then((data: { items?: SearchItem[] } | null) => {
           if (data?.items) {
-            setSemanticResults(data.items);
+            setSemantic({ query: trimmed, items: data.items });
           }
         })
         .catch(() => {
@@ -115,6 +113,8 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
       controller.abort();
     };
   }, [open, query]);
+
+  const semanticResults = semantic && semantic.query === query.trim() ? semantic.items : null;
 
   const results = useMemo(() => {
     if (!query.trim()) return searchItems.filter((i) => i.type !== "Blog").slice(0, 6);
@@ -141,7 +141,7 @@ export function CommandPalette({ items }: { items: SearchItem[] }) {
   const close = () => {
     setOpen(false);
     setQuery("");
-    setSemanticResults(null);
+    setSemantic(null);
     setActive(0);
   };
 

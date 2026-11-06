@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { notFound } from "next/navigation";
 import { formatDate, type PostBlock } from "@/lib/posts";
 import { getPublicPost, getPublicPosts, getPublicSettings } from "@/lib/public-api";
@@ -21,22 +22,25 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   if (!post) return {};
 
   const image = post.cover || "/opengraph-image";
+  const title = post.seoTitle || post.title;
+  const description = post.metaDescription || post.excerpt;
   return {
-    title: post.title,
-    description: post.excerpt,
+    title,
+    description,
+    keywords: post.keywords,
     alternates: { canonical: `/blog/${encodeURIComponent(post.slug)}` },
     openGraph: {
       type: "article",
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       url: `/blog/${encodeURIComponent(post.slug)}`,
       images: [{ url: image, alt: post.title }],
       publishedTime: post.date,
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       images: [image],
     },
   };
@@ -101,9 +105,9 @@ async function PostContent({ params }: { params: PageProps<"/blog/[slug]">["para
 
         <div className="relative mx-auto max-w-4xl px-6">
           <Reveal className="flex items-center justify-between text-sm">
-            <Link href="/#blog" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
+            <BackLink href="/#blog" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
               <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> Semua artikel
-            </Link>
+            </BackLink>
             <span className="font-jp text-secondary">{post.titleJp}</span>
           </Reveal>
 

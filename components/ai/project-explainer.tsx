@@ -16,9 +16,11 @@ export function ProjectExplainer({ slug }: { slug: string }) {
   // Penjelasan yang sudah dibuat disimpan per level
   const [texts, setTexts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function choose(level: ExplainLevel) {
     setActive(level);
+    setError(null);
     if (texts[level]) return;
     setLoading(true);
     try {
@@ -28,7 +30,14 @@ export function ProjectExplainer({ slug }: { slug: string }) {
         body: JSON.stringify({ slug, level }),
       });
       const data = await res.json();
-      setTexts((prev) => ({ ...prev, [level]: data.text ?? "Gagal bikin penjelasan, coba lagi ya." }));
+      if (res.ok && data.text) {
+        setTexts((prev) => ({ ...prev, [level]: data.text }));
+      } else {
+        // Jangan disimpan ke cache supaya bisa dicoba lagi
+        setError(data.error ?? "Gagal bikin penjelasan, coba lagi ya.");
+      }
+    } catch {
+      setError("Koneksi bermasalah, coba lagi ya.");
     } finally {
       setLoading(false);
     }
@@ -73,6 +82,8 @@ export function ProjectExplainer({ slug }: { slug: string }) {
             </div>
           ) : text ? (
             <Typewriter key={active} text={text} />
+          ) : error ? (
+            <p className="text-sm text-secondary">{error}</p>
           ) : null}
         </div>
       )}

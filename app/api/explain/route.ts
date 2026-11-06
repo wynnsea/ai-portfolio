@@ -1,3 +1,4 @@
+import { limitAiRequest, type RateLimitRule } from "@/lib/rate-limit";
 import type { ExplainLevel } from "@/lib/ai/types";
 import { runProjectExplainGraph } from "@/lib/ai/workflows";
 import { getPublicProject, getPublicSettings } from "@/lib/public-api";
@@ -6,7 +7,12 @@ import { site } from "@/lib/site";
 
 const LEVELS: ExplainLevel[] = ["recruiter", "engineer", "awam"];
 
+const RATE_LIMIT: RateLimitRule = { name: "explain", limit: 10, windowSeconds: 60 * 60 };
+
 export async function POST(request: Request) {
+  const limited = await limitAiRequest(request, RATE_LIMIT);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const level = LEVELS.find((l) => l === body?.level);
   const slug = typeof body?.slug === "string" ? body.slug : null;

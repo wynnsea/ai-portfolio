@@ -34,6 +34,7 @@ const SeaGraphAnnotation = Annotation.Root({
   history: Annotation<ChatTurn[]>(),
   knowledgeInput: Annotation<PortfolioKnowledgeInput>(),
   ownerName: Annotation<string>(),
+  ownerEmail: Annotation<string>(),
   contextText: Annotation<string>(),
   allowedActions: Annotation<{ href: string; label: string }[]>(),
   rawResult: Annotation<z.infer<typeof seaStructuredSchema> | null>(),
@@ -48,6 +49,7 @@ type SeaGraphState = typeof SeaGraphAnnotation.State;
 async function retrieveNode(state: SeaGraphState): Promise<Partial<SeaGraphState>> {
   const { store, data } = await getPortfolioVectorStore(state.knowledgeInput);
   const ownerName = data.settings.name || "Wayan";
+  const ownerEmail = data.settings.email;
 
   const lastUserTurns = state.history
     .filter((h) => h.role === "user")
@@ -58,12 +60,14 @@ async function retrieveNode(state: SeaGraphState): Promise<Partial<SeaGraphState
 
   const retrievedWithScores = await store.similaritySearchWithScore(retrievalQuery, 6);
   const allDocs = store.getDocuments();
-  const identityDoc = allDocs.find((d) => d.metadata.id === "identity-core");
-  const skillsDoc = allDocs.find((d) => d.metadata.id === "skills-matrix");
 
+  // Profil inti & skill selalu disertakan (semua potongannya), apa pun pertanyaannya
   const selectedDocs = new Map<string, string>();
-  if (identityDoc) selectedDocs.set(identityDoc.metadata.id, identityDoc.pageContent);
-  if (skillsDoc) selectedDocs.set(skillsDoc.metadata.id, skillsDoc.pageContent);
+  for (const parentId of ["identity-core", "skills-matrix"]) {
+    for (const doc of allDocs) {
+      if ((doc.metadata.parentId ?? doc.metadata.id) === parentId) selectedDocs.set(doc.metadata.id, doc.pageContent);
+    }
+  }
 
   const actionMap = new Map<string, string>();
   for (const [doc] of retrievedWithScores) {
@@ -96,6 +100,7 @@ async function retrieveNode(state: SeaGraphState): Promise<Partial<SeaGraphState
 
   return {
     ownerName,
+    ownerEmail,
     contextText,
     allowedActions,
     knowledgeInput: data,
@@ -131,7 +136,7 @@ GAYA BAHASA (WAJIB SANTAI & GAK FORMAL):
 - HINDARI kata-kata baku/kaku seperti: "merupakan", "menggarap", "mengandalkan", "menjabat", "terlibat dalam", "ia", "beliau", "Anda", "memiliki", "apabila", "namun demikian".
 - Contoh nada bicara yang pas:
   * "Sekarang bos saya kerja sebagai Junior AI Engineer di Global Collabo Tech. Sebelumnya dia sempet jadi IT Coordinator di Politeknik Takumi, makanya si bos kebiasaan selalu mikirin kenyamanan user pas bikin sistem."
-  * "Paling gampang hubungi bos saya lewat email ke wayaandeva123@gmail.com, atau mampir ke GitHub sama LinkedIn-nya. Biasanya si bos fast response kok!"
+  * "Paling gampang hubungi bos saya lewat email ke ${state.ownerEmail}, atau mampir ke GitHub sama LinkedIn-nya. Biasanya si bos fast response kok!"
   * "Kalau soal Kubernetes atau training model dari nol, bos saya emang belum fokus ke sana nih. Sehari-hari dia lebih banyak ngulik integrasi AI ke web kayak LLM API, RAG, sama full-stack dev."
 
 ATURAN PRIVASI & KEAMANAN SISTEM (SANGAT KETAT & WAJIB DITAATI 100%):

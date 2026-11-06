@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { CheckCircle2, Clock, Loader2, Mail, Send } from "lucide-react";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
+import {
+  Turnstile,
+  TURNSTILE_SITE_KEY,
+  type TurnstileHandle,
+} from "@/components/turnstile";
 
 const MAX_DAILY_MESSAGES = 2;
 const STORAGE_KEY = "wynnsea_contact_daily_limit_v1";
@@ -14,7 +20,48 @@ function getTodayString(): string {
   return `${year}-${month}-${day}`;
 }
 
+// Kuota harian disimpan di localStorage dan dibaca lewat useSyncExternalStore
+// (bukan setState di dalam effect). Cadangan di memori kalau localStorage diblokir.
+let memoryCount = { date: "", count: 0 };
+const countListeners = new Set<() => void>();
+
+function readStoredCount(): number {
+  const today = getTodayString();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.date === today && typeof parsed.count === "number")
+        return parsed.count;
+    }
+    return 0;
+  } catch {
+    return memoryCount.date === today ? memoryCount.count : 0;
+  }
+}
+
+function writeStoredCount(count: number) {
+  const entry = { date: getTodayString(), count };
+  memoryCount = entry;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
+  } catch {
+    // localStorage diblokir: cukup simpan di memori
+  }
+  countListeners.forEach((listener) => listener());
+}
+
+function subscribeCount(listener: () => void) {
+  countListeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    countListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
 export function ContactForm() {
+  const settings = useSiteSettings();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -22,48 +69,33 @@ export function ContactForm() {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dailyCount, setDailyCount] = useState<number>(0);
-  const [loaded, setLoaded] = useState(false);
+  // null saat render di server, supaya HTML server dan client sama
+  const storedCount = useSyncExternalStore(
+    subscribeCount,
+    readStoredCount,
+    () => null,
+  );
+  const loaded = storedCount !== null;
+  const dailyCount = storedCount ?? 0;
+  const [website, setWebsite] = useState(""); // honeypot
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
 
-  useEffect(() => {
-    try {
-      const today = getTodayString();
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.date === today && typeof parsed.count === "number") {
-          setDailyCount(parsed.count);
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, count: 0 }));
-          setDailyCount(0);
-        }
-      } else {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, count: 0 }));
-        setDailyCount(0);
-      }
-    } catch {
-      // Abaikan jika localStorage diblokir
-    } finally {
-      setLoaded(true);
-    }
-  }, []);
-
-  const updateStoredCount = (newCount: number) => {
-    try {
-      const today = getTodayString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, count: newCount }));
-      setDailyCount(newCount);
-    } catch {
-      setDailyCount(newCount);
-    }
-  };
+  const updateStoredCount = (newCount: number) => writeStoredCount(newCount);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (dailyCount >= MAX_DAILY_MESSAGES) {
-      setError("Kamu sudah mencapai batas maksimal 2 pesan untuk hari ini. Silakan hubungi langsung lewat email.");
+      setError(
+        "Kamu sudah mencapai batas maksimal 2 pesan untuk hari ini. Silakan hubungi langsung lewat email.",
+      );
+      return;
+    }
+
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Tunggu verifikasi keamanan selesai dulu ya.");
       return;
     }
 
@@ -73,7 +105,14 @@ export function ContactForm() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, subject, message }),
+        body: JSON.stringify({
+          name,
+          email,
+          subject,
+          message,
+          website,
+          turnstileToken,
+        }),
       });
 
       const data = await res.json();
@@ -93,8 +132,14 @@ export function ContactForm() {
       setSubject("");
       setMessage("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Terjadi kendala saat mengirim pesan.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Terjadi kendala saat mengirim pesan.",
+      );
     } finally {
+      // Token Turnstile hanya bisa dipakai sekali
+      turnstileRef.current?.reset();
       setBusy(false);
     }
   };
@@ -106,9 +151,12 @@ export function ContactForm() {
     return (
       <div className="rounded-3xl border border-white/20 bg-white/5 p-8 text-center backdrop-blur-md">
         <CheckCircle2 className="mx-auto size-12 text-accent" />
-        <h3 className="mt-4 text-xl font-light tracking-tight text-white">Pesan Berhasil Terkirim!</h3>
+        <h3 className="mt-4 text-xl font-light tracking-tight text-white">
+          Pesan Berhasil Terkirim!
+        </h3>
         <p className="mt-2 text-sm leading-relaxed text-white/70">
-          Terima kasih sudah menghubungi. Pesan kamu sudah tersampaikan dan bos saya akan segera membalas lewat email.
+          Terima kasih sudah menghubungi. Pesan kamu sudah tersampaikan dan bos
+          saya akan segera membalas lewat email.
         </p>
         <p className="mt-3 text-xs text-white/50">
           {dailyCount >= MAX_DAILY_MESSAGES
@@ -119,8 +167,7 @@ export function ContactForm() {
           <button
             type="button"
             onClick={() => setSuccess(false)}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/30 px-5 py-2 text-xs font-medium text-white transition hover:bg-white hover:text-primary"
-          >
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/30 px-5 py-2 text-xs font-medium text-white transition hover:bg-white hover:text-primary">
             Kirim pesan lain
           </button>
         )}
@@ -133,19 +180,23 @@ export function ContactForm() {
       <div className="space-y-4 rounded-3xl border border-white/15 bg-white/[0.04] p-6 backdrop-blur-md md:p-8">
         <div className="flex items-center gap-3 text-accent">
           <Clock className="size-6 shrink-0" />
-          <h3 className="text-lg font-light tracking-tight text-white">Batas Pengiriman Harian Tercapai</h3>
+          <h3 className="text-lg font-light tracking-tight text-white">
+            Batas Pengiriman Harian Tercapai
+          </h3>
         </div>
         <p className="text-sm leading-relaxed text-white/75">
-          Kamu sudah mengirim <span className="font-semibold text-white">2 pesan hari ini</span> (batas maksimal 2x sehari per pengunjung).
+          Kamu sudah mengirim{" "}
+          <span className="font-semibold text-white">2 pesan hari ini</span>{" "}
+          (batas maksimal 2x sehari per pengunjung).
         </p>
         <p className="text-sm leading-relaxed text-white/60">
-          Jika ada hal mendesak atau ingin berdiskusi lebih lanjut, kamu bisa langsung menghubungi bos saya lewat email langsung di bawah ini.
+          Jika ada hal mendesak atau ingin berdiskusi lebih lanjut, kamu bisa
+          langsung menghubungi bos saya lewat email langsung di bawah ini.
         </p>
         <div className="pt-2">
           <a
-            href="mailto:contact@wynnsea.my.id"
-            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-primary transition hover:bg-white/90"
-          >
+            href={`mailto:${settings.email}`}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-primary transition hover:bg-white/90">
             <Mail className="size-4" /> Hubungi via Email Langsung
           </a>
         </div>
@@ -154,11 +205,15 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-white/15 bg-white/[0.04] p-6 backdrop-blur-md md:p-8">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-3xl border border-white/15 bg-white/[0.04] p-6 backdrop-blur-md md:p-8">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="contact-name" className="mb-1.5 block text-xs font-medium text-white/70">
-            Nama kamu
+          <label
+            htmlFor="contact-name"
+            className="mb-1.5 block text-xs font-medium text-white/70">
+            Nama
           </label>
           <input
             id="contact-name"
@@ -171,7 +226,9 @@ export function ContactForm() {
           />
         </div>
         <div>
-          <label htmlFor="contact-email" className="mb-1.5 block text-xs font-medium text-white/70">
+          <label
+            htmlFor="contact-email"
+            className="mb-1.5 block text-xs font-medium text-white/70">
             Email
           </label>
           <input
@@ -180,14 +237,16 @@ export function ContactForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="nama@perusahaan.com"
+            placeholder="email@example.com"
             className="w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-white/60 focus:bg-white/10"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="contact-subject" className="mb-1.5 block text-xs font-medium text-white/70">
+        <label
+          htmlFor="contact-subject"
+          className="mb-1.5 block text-xs font-medium text-white/70">
           Subjek (opsional)
         </label>
         <input
@@ -201,7 +260,9 @@ export function ContactForm() {
       </div>
 
       <div>
-        <label htmlFor="contact-message" className="mb-1.5 block text-xs font-medium text-white/70">
+        <label
+          htmlFor="contact-message"
+          className="mb-1.5 block text-xs font-medium text-white/70">
           Pesan
         </label>
         <textarea
@@ -215,6 +276,24 @@ export function ContactForm() {
         />
       </div>
 
+      {/* Honeypot: disembunyikan dari pengguna & pembaca layar, biasanya diisi bot */}
+      <div
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="contact-website">Website</label>
+        <input
+          id="contact-website"
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
+      </div>
+
+      <Turnstile ref={turnstileRef} onToken={setTurnstileToken} />
+
       {error && (
         <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 text-xs text-rose-200">
           {error}
@@ -223,14 +302,19 @@ export function ContactForm() {
 
       <div className="flex flex-col items-start justify-between gap-3 pt-2 sm:flex-row sm:items-center">
         <span className="text-xs text-white/50">
-          Batas pesan: tersisa <span className="font-semibold text-white/80">{remaining}</span> dari {MAX_DAILY_MESSAGES} kali hari ini
+          Batas pesan: tersisa{" "}
+          <span className="font-semibold text-white/80">{remaining}</span> dari{" "}
+          {MAX_DAILY_MESSAGES} kali hari ini
         </span>
 
         <button
           type="submit"
-          disabled={busy || isLimitReached}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-sm font-medium text-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+          disabled={
+            busy ||
+            isLimitReached ||
+            Boolean(TURNSTILE_SITE_KEY && !turnstileToken)
+          }
+          className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-sm font-medium text-primary transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
           {busy ? (
             <>
               <Loader2 className="size-4 animate-spin" /> Mengirim...

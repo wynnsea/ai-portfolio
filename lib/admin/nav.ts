@@ -1,5 +1,6 @@
 import {
   Award,
+  Bot,
   CalendarDays,
   FileText,
   FolderKanban,
@@ -21,6 +22,7 @@ export const adminNav: { title: string; items: NavItem[] }[] = [
       { label: "Sertifikasi", href: "/admin/sertifikasi", icon: Award },
       { label: "Kegiatan", href: "/admin/kegiatan", icon: CalendarDays },
       { label: "Artikel", href: "/admin/artikel", icon: FileText },
+      { label: "Agen Blog", href: "/admin/agen-blog", icon: Bot },
       { label: "Pesan", href: "/admin/pesan", icon: Mail },
     ],
   },

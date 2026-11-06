@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -23,11 +23,6 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loggedOutNotice, setLoggedOutNotice] = useState(loggedOutParam);
 
-  // Selalu pastikan state loading bersih saat komponen dimount
-  useEffect(() => {
-    setLoading(false);
-  }, []);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -42,7 +37,8 @@ export function LoginForm() {
         return;
       }
       setLoading(false);
-      // Hard navigation agar sesi admin termuat bersih dan fresh
+      // Hard navigation agar sesi admin termuat bersih dan fresh (disengaja, bukan router.push)
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/admin";
     } catch (err: unknown) {
       setLoading(false);
@@ -70,7 +66,7 @@ export function LoginForm() {
         {/* Logo & Brand Header */}
         <div className="flex items-center gap-3">
           <Image
-            src="/brand/logo.png"
+            src="/brand/logo-v3.png"
             alt=""
             width={44}
             height={44}

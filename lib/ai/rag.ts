@@ -15,7 +15,10 @@ import {
   getPublicProjects,
   getPublicSettings,
 } from "@/lib/public-api";
-import { createEmbeddingsModel, GEMINI_EMBEDDING_MODELS, getGeminiApiKey } from "@/lib/ai/langchain-llm";
+import { createEmbeddingsModel, EMBEDDING_MODEL_KEY, getGeminiApiKey } from "@/lib/ai/langchain-llm";
+import { chunkDocuments } from "@/lib/ai/chunking";
+import { chunkHash, getChunkEmbeddings } from "@/lib/ai/embedding-store";
+import { createHash } from "node:crypto";
 import type { SearchItem } from "@/lib/ai/types";
 
 export type PortfolioKnowledgeInput = {
@@ -36,6 +39,10 @@ export type PortfolioDocMetadata = {
   searchType?: SearchItem["type"];
   slug?: string;
   keywords?: string;
+  /** Diisi saat chunking: id dokumen asal & posisi potongan */
+  parentId?: string;
+  chunkIndex?: number;
+  chunkCount?: number;
 };
 
 const STOPWORDS = new Set([
@@ -149,29 +156,7 @@ export class PortfolioVectorStore extends VectorStore {
   }
 
   async addDocuments(documents: Document<PortfolioDocMetadata>[]): Promise<void> {
-    const texts = documents.map((d) => d.pageContent);
-    let vectors: number[][] = [];
-
-    if (getGeminiApiKey()) {
-      for (const modelName of GEMINI_EMBEDDING_MODELS) {
-        try {
-          const embModel = createEmbeddingsModel(modelName);
-          vectors = await embModel.embedDocuments(texts);
-          if (vectors.length === documents.length && vectors[0]?.length > 0) {
-            this.embeddings = embModel;
-            this.hasDenseEmbeddings = true;
-            break;
-          }
-        } catch (err) {
-          console.warn(`[rag] Embeddings model ${modelName} gagal, mencoba fallback:`, err instanceof Error ? err.message : err);
-        }
-      }
-    }
-
-    if (!this.hasDenseEmbeddings) {
-      vectors = documents.map(() => []);
-    }
-
+    const vectors = await this.embeddings.embedDocuments(documents.map((d) => d.pageContent)).catch(() => []);
     await this.addVectors(vectors, documents);
   }
 
@@ -183,6 +168,7 @@ export class PortfolioVectorStore extends VectorStore {
         metadata: documents[i].metadata as PortfolioDocMetadata,
       });
     }
+    this.hasDenseEmbeddings = this.memoryVectors.some((v) => v.embedding.length > 0);
   }
 
   async similaritySearchVectorWithScore(
@@ -608,15 +594,6 @@ const globalForRag = globalThis as unknown as {
   __wynnseaRagCache?: CachedRagStore;
 };
 
-function computeFingerprint(input: PortfolioKnowledgeInput): string {
-  const p = (input.projects ?? []).map((x) => `${x.slug}:${x.title}:${x.summary.length}`).join("|");
-  const b = (input.posts ?? []).map((x) => `${x.slug}:${x.date}:${x.content.length}`).join("|");
-  const c = (input.certifications ?? []).map((x) => `${x.title}:${x.score ?? ""}`).join("|");
-  const a = (input.activities ?? []).map((x) => `${x.title}:${x.role}`).join("|");
-  const s = input.settings ? `${input.settings.name}:${input.settings.role}:${input.settings.description.length}` : "default";
-  return `${s}__${p}__${b}__${c}__${a}`;
-}
-
 export async function loadPortfolioKnowledgeData(
   provided?: PortfolioKnowledgeInput,
 ): Promise<Required<PortfolioKnowledgeInput>> {
@@ -655,14 +632,21 @@ export async function loadPortfolioKnowledgeData(
 }
 
 /**
- * Mengambil instance PortfolioVectorStore (LangChain VectorStore) yang sudah di-index.
- * Menggunakan cache in-memory di server agar tidak perlu re-embed setiap request.
+ * Mengambil PortfolioVectorStore yang sudah di-index.
+ *
+ * Alur RAG: konten → dokumen → chunking → embedding (dibaca dari Supabase kalau isinya belum berubah)
+ * → vector store in-memory dengan hybrid search. Hasilnya di-cache 5 menit per instance server.
  */
 export async function getPortfolioVectorStore(
   provided?: PortfolioKnowledgeInput,
 ): Promise<{ store: PortfolioVectorStore; data: Required<PortfolioKnowledgeInput> }> {
   const data = await loadPortfolioKnowledgeData(provided);
-  const fingerprint = computeFingerprint(data);
+  const chunks = chunkDocuments(buildPortfolioDocuments(data));
+
+  // Sidik jari dari hash setiap potongan: berubah persis saat ada konten yang berubah
+  const fingerprint = createHash("sha256")
+    .update(chunks.map((c) => `${c.metadata.id}:${chunkHash(EMBEDDING_MODEL_KEY, c.pageContent)}`).join("|"))
+    .digest("hex");
   const now = Date.now();
 
   const cached = globalForRag.__wynnseaRagCache;
@@ -670,10 +654,12 @@ export async function getPortfolioVectorStore(
     return { store: cached.store, data: cached.rawInput };
   }
 
-  const docs = buildPortfolioDocuments(data);
-  const embeddings = getGeminiApiKey() ? createEmbeddingsModel() : new FallbackEmbeddings();
-  const store = new PortfolioVectorStore(embeddings);
-  await store.addDocuments(docs);
+  const hasKey = Boolean(getGeminiApiKey());
+  const store = new PortfolioVectorStore(hasKey ? createEmbeddingsModel("query") : new FallbackEmbeddings());
+  const vectors = hasKey
+    ? await getChunkEmbeddings(chunks, createEmbeddingsModel("document"), EMBEDDING_MODEL_KEY)
+    : chunks.map(() => []);
+  await store.addVectors(vectors, chunks);
 
   globalForRag.__wynnseaRagCache = {
     fingerprint,

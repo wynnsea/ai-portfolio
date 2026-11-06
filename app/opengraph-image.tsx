@@ -51,7 +51,6 @@ export default async function Image() {
         </div>
 
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", flex: 1, paddingTop: 70 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photoSrc}
             alt=""

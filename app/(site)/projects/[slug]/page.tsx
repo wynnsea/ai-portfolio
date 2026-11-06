@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { notFound } from "next/navigation";
 import { getPublicProject, getPublicProjects, getPublicSettings } from "@/lib/public-api";
 import { Parallax } from "@/components/motion/parallax";
@@ -83,9 +84,9 @@ async function ProjectContent({ params }: { params: PageProps<"/projects/[slug]"
 
         <div className="relative mx-auto max-w-7xl px-6 lg:pl-24">
           <Reveal className="flex items-center justify-between text-sm">
-            <Link href="/#projects" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
+            <BackLink href="/#projects" className="group inline-flex items-center gap-2 text-secondary transition-colors hover:text-primary">
               <span aria-hidden className="transition-transform duration-500 ease-expo group-hover:-translate-x-1">←</span> Semua proyek
-            </Link>
+            </BackLink>
             <span className="text-secondary">
               Project {String(index + 1).padStart(2, "0")} / {String(projectList.length).padStart(2, "0")}
             </span>

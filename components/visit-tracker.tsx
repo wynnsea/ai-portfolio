@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { getPublicClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "wynnsea-visit";
 
@@ -11,8 +10,6 @@ const STORAGE_KEY = "wynnsea-visit";
  */
 export function VisitTracker() {
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     const today = new Date().toISOString().slice(0, 10);
     try {
       if (window.sessionStorage.getItem(STORAGE_KEY) === today) return;
@@ -21,13 +18,15 @@ export function VisitTracker() {
       // sessionStorage diblokir (mis. mode privat tertentu): tetap dicatat
     }
 
-    // Query Supabase baru dikirim saat di-then/await, jadi .then() di sini wajib
-    getPublicClient()
-      .from("page_views")
-      .insert({ path: window.location.pathname.slice(0, 200) })
-      .then(({ error }) => {
-        if (error) console.warn("Gagal mencatat kunjungan:", error.message);
-      });
+    // Dicatat lewat server supaya bisa di-rate-limit (lihat app/api/visit/route.ts)
+    fetch("/api/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: window.location.pathname }),
+      keepalive: true,
+    }).catch(() => {
+      // Gagal mencatat kunjungan tidak perlu mengganggu pengunjung
+    });
   }, []);
 
   return null;

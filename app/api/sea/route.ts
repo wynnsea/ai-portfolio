@@ -1,3 +1,4 @@
+import { limitAiRequest, type RateLimitRule } from "@/lib/rate-limit";
 import { runSeaRagAgent, type ChatTurn } from "@/lib/ai/sea-graph";
 import {
   getPublicActivities,
@@ -7,7 +8,12 @@ import {
   getPublicSettings,
 } from "@/lib/public-api";
 
+const RATE_LIMIT: RateLimitRule = { name: "sea", limit: 15, windowSeconds: 10 * 60 };
+
 export async function POST(request: Request) {
+  const limited = await limitAiRequest(request, RATE_LIMIT);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   const message = typeof body?.message === "string" ? body.message.slice(0, 500) : "";
   if (!message.trim()) return Response.json({ error: "Pesan kosong" }, { status: 400 });

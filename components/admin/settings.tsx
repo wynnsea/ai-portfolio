@@ -119,7 +119,6 @@ export function Settings() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     getSettings()
       .then((result) => {
         if (!active) return;

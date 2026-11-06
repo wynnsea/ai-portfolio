@@ -23,20 +23,70 @@ Website portofolio personal Wayan, Junior AI Engineer. Dibangun dengan Next.js 1
 - Proyek dummy ditulis ulang dengan fokus integrasi AI (LLM API, RAG, embeddings, tool calling).
 - **Blog** dengan 5 artikel dummy: artikel unggulan, daftar artikel dengan preview cover yang mengikuti kursor, dan halaman artikel `/blog/[slug]` dengan progress bar membaca.
 
-## Fitur AI (versi demo)
+## Fitur AI
 
-Semua fitur sudah lewat API route di server, tapi jawabannya masih simulasi dari `lib/ai/mock.ts`.
-Untuk versi asli, cukup ganti isi fungsi mock dengan panggilan LLM (API key di `.env.local`).
+Semua fitur AI berjalan di API route server memakai **Gemini** lewat **LangChain + LangGraph**.
+Kalau `GEMINI_API_KEY` kosong atau semua model gagal, jawaban otomatis jatuh ke simulasi di `lib/ai/mock.ts`.
 
-| Fitur | Komponen | API route |
-| --- | --- | --- |
-| Chat SEA AI + tombol aksi ke halaman terkait | `components/chat-launcher.tsx` | `/api/sea` |
-| Job Match untuk recruiter | `components/ai/job-match-section.tsx` | `/api/job-match` |
-| Penjelas project per level pembaca | `components/ai/project-explainer.tsx` | `/api/explain` |
-| TL;DR artikel | `components/ai/tldr-box.tsx` | `/api/tldr` |
-| Pencarian ⌘K / Ctrl+K | `components/ai/command-palette.tsx` | (client, nanti pakai embeddings) |
+| Fitur | Komponen | API route | Logika |
+| --- | --- | --- | --- |
+| Chat SEA AI + tombol aksi ke halaman terkait | `components/chat-launcher.tsx` | `/api/sea` | `lib/ai/sea-graph.ts` (retrieve → generate → finalize) |
+| Job Match untuk recruiter | `components/ai/job-match-section.tsx` | `/api/job-match` | LLM mengekstrak syarat (`lib/ai/job-match.ts`), skor dihitung deterministik (`lib/ai/job-match-score.ts`) |
+| Penjelas project per level pembaca | `components/ai/project-explainer.tsx` | `/api/explain` | `lib/ai/workflows.ts` |
+| TL;DR artikel | `components/ai/tldr-box.tsx` | `/api/tldr` | `lib/ai/workflows.ts` |
+| Pencarian ⌘K / Ctrl+K | `components/ai/command-palette.tsx` | `/api/search` | Semantic search di `lib/ai/workflows.ts` |
 
-Sebelum dipublikasikan dengan LLM asli: tambahkan rate limit per IP, cache hasil (TL;DR & penjelasan cukup dibuat sekali), dan batasi panjang input.
+- **RAG** (`lib/ai/rag.ts`), alurnya:
+  1. Konten (profil, proyek, artikel, sertifikasi, kegiatan) disusun jadi dokumen.
+  2. **Chunking** (`lib/ai/chunking.ts`): dokumen panjang dipecah per paragraf/baris/kalimat (maks 900 karakter,
+     overlap 150), judul dokumen diulang di tiap potongan.
+  3. **Embedding** Gemini `gemini-embedding-001` (768 dimensi, `RETRIEVAL_DOCUMENT` / `RETRIEVAL_QUERY`).
+     Hasilnya disimpan di tabel `rag_chunks` (pgvector) per hash isi (`lib/ai/embedding-store.ts`),
+     jadi hanya potongan baru/berubah yang di-embed ulang.
+  4. **Retrieval** hybrid di memori: 65% kemiripan embedding + 35% skor kata kunci. Fungsi `match_rag_chunks`
+     di database siap dipakai kalau korpus membesar.
+- **Fallback model** (`lib/ai/langchain-llm.ts`): mencoba beberapa model Gemini berurutan dengan structured output (Zod).
+
+### Agen Blog (admin → Agen Blog)
+
+AI yang menulis draft artikel secara terjadwal; semua hasil berstatus **Draft** sampai kamu terbitkan.
+
+- **Bahan**: antrian ide + catatan mentah dari admin. Kalau kosong, agen mengusulkan topik dari proyek & skill.
+- **Alur** (`lib/ai/blog-agent.ts`, LangGraph): pilih topik → ambil konteks dari RAG → tulis (Gemini Flash, thinking LOW)
+  → cek SEO otomatis (panjang judul/meta, slug, subjudul, keyword, jumlah kata) → tulis ulang sekali kalau belum lolos → simpan Draft.
+- **Review**: pratinjau tampilan Google, catatan yang perlu dicek, tombol Terbitkan / Arsipkan / Minta revisi.
+- **Jadwal**: Vercel Cron (`vercel.json`) memanggil `/api/cron/blog-agent` tiap hari 08.00 WIB; agen menulis kalau sudah lewat
+  interval di pengaturan. Wajib isi `CRON_SECRET` dan `SUPABASE_SERVICE_ROLE_KEY` di env Vercel.
+- **Notifikasi** email via Resend (opsional) saat draft baru siap atau agen gagal.
+
+### Form kontak & keamanan
+
+- **Anti-bot**: honeypot tersembunyi + Cloudflare Turnstile (`components/turnstile.tsx`, `lib/contact-guard.ts`).
+  Isi `NEXT_PUBLIC_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`; kalau kosong, verifikasi dilewati.
+- **Notifikasi email** pesan baru lewat Resend: isi `RESEND_API_KEY` dan `CONTACT_NOTIFY_EMAIL` (opsional).
+- **Kunjungan** dicatat lewat `/api/visit` (service role + rate limit), bukan insert langsung dari browser.
+- **Security header** (CSP, HSTS, X-Frame-Options, dll.) diatur di `next.config.ts`. CSP memakai `'unsafe-inline'`
+  karena nonce tidak cocok dengan Partial Prerendering. Tambahkan domain ke CSP kalau memuat script/gambar dari luar.
+
+### Rate limit
+
+Semua route AI dan form kontak dibatasi lewat `lib/rate-limit.ts`. Hitungannya disimpan di tabel
+`public.rate_limits` (migration `20261106000000_rate_limits.sql`) supaya tetap berlaku di hosting serverless.
+
+| Route | Batas per IP |
+| --- | --- |
+| `/api/sea` | 15 / 10 menit |
+| `/api/job-match` | 5 / jam |
+| `/api/explain`, `/api/tldr` | 10 / jam |
+| `/api/search` | 60 / 10 menit |
+| `/api/contact` | 2 / 24 jam per IP **dan** per email |
+
+Seluruh fitur AI juga punya batas global 500 permintaan/jam sebagai rem biaya.
+Fungsi `hit_rate_limit` hanya bisa dipanggil service role, jadi **`SUPABASE_SERVICE_ROLE_KEY` wajib diisi di server**.
+Tanpa kunci itu, limiter jatuh ke mode in-memory yang hanya berlaku per instance.
+
+IP pengunjung dibaca dari `x-real-ip` / `x-forwarded-for`. Di Vercel header ini diisi platform; kalau self-host,
+pastikan reverse proxy menimpa header tersebut supaya tidak bisa dipalsukan klien.
 
 ## Setup
 
@@ -47,14 +97,14 @@ Butuh Node.js 20.9 atau lebih baru.
 Website dan panel admin memakai Supabase (Postgres, Auth, dan Storage), bukan API Laravel.
 
 1. Salin `.env.example` menjadi `.env.local`, lalu isi `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `GEMINI_API_KEY`.
-2. Di Supabase SQL Editor, jalankan `supabase/migrations/20261024000000_init.sql`,
-   lalu `supabase/seed.sql` untuk membuat skema dan data awal.
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, dan `GEMINI_API_KEY`.
+2. Di Supabase SQL Editor, jalankan semua file di `supabase/migrations/` sesuai urutan nama file
+   (`init`, `contact_messages`, `rate_limits`, `page_views_server_only`, `rag_chunks`, `blog_agent`), lalu `supabase/seed.sql` untuk data awal.
 3. Buat akun admin di Supabase Authentication, lalu daftarkan UUID user tersebut ke
    `public.admins` agar kebijakan RLS memberi akses tulis ke panel.
 
-Jangan gunakan service role key di browser atau variabel `NEXT_PUBLIC_*`; akses database
-publik dan admin dibatasi oleh kebijakan RLS di migration.
+Service role key hanya dipakai di server (`lib/supabase/server.ts`, untuk form kontak dan rate limit).
+Jangan pernah menaruhnya di variabel `NEXT_PUBLIC_*`; akses database publik dan admin dibatasi oleh RLS di migration.
 
 ```bash
 npm install
@@ -79,44 +129,47 @@ npm install motion lenis
 | `tailwindcss` v4 | Styling dan design token (`@theme` di `app/globals.css`) |
 | `motion` | Framer Motion (nama paket barunya). Import dari `motion/react` |
 | `lenis` | Smooth scroll agar parallax terasa halus |
+| `@supabase/supabase-js` | Database, Auth panel admin, dan Storage gambar |
+| `@langchain/core`, `@langchain/langgraph`, `@langchain/google-genai` | Pipeline AI (graph, RAG, Gemini) |
+| `zod` | Skema structured output LLM |
 
 ## Struktur folder
 
 ```
 app/
-  layout.tsx            Font, metadata, provider, navbar, tombol SEA AI
-  page.tsx              Susunan section halaman utama
-  projects/[slug]/page.tsx  Halaman detail proyek (prerender statis)
-  blog/[slug]/page.tsx      Halaman artikel blog (prerender statis)
-  globals.css           Design token (warna, font, easing)
+  layout.tsx                 Font, metadata, provider
+  (site)/                    Website publik (navbar, tombol SEA AI)
+    page.tsx                 Susunan section halaman utama
+    projects/[slug]/         Detail proyek
+    blog/[slug]/             Artikel blog
+  admin/
+    (auth)/login/            Login admin (Supabase Auth)
+    (panel)/                 Dashboard, CRUD proyek/artikel/sertifikasi/kegiatan, pesan, pengaturan
+  api/
+    sea, job-match, explain, tldr, search   Fitur AI
+    contact                  Form kontak → tabel messages
+  sitemap.ts, robots.ts, opengraph-image.tsx   SEO
 components/
-  providers/
-    smooth-scroll.tsx   Lenis + MotionConfig (menghormati reduce motion)
-    intro-provider.tsx  Status intro (sekali per sesi browser)
-  motion/
-    parallax.tsx        Wrapper parallax yang bisa dipakai ulang
-    reveal.tsx          Animasi masuk saat section terlihat
-    parallax-media.tsx  Gambar yang bergeser di dalam bingkainya
-  preloader.tsx         Layar loading + ucapan selamat datang
-  navbar.tsx            Navigasi + menu mobile (berfungsi juga dari halaman detail)
-  about-section.tsx     Section About Me
-  chat-launcher.tsx     Tombol & panel SEA AI
-  projects/
-    projects-section.tsx  Susunan card acak + parallax
-    project-card.tsx      Card proyek (hover, link ke detail)
-    project-cover.tsx     Cover kanji generatif / foto asli (dipakai juga oleh blog)
-  blog/
-    blog-section.tsx      Artikel unggulan + daftar artikel
-    blog-list.tsx         Daftar artikel dengan preview mengikuti kursor
-    reading-progress.tsx  Progress bar membaca
-  hero.tsx              Hero section dengan parallax berlapis
-  statement.tsx         Teks yang menyala kata demi kata mengikuti scroll
-  contact-footer.tsx    Kontak
+  providers/                 Lenis, intro, pengaturan situs
+  motion/                    Parallax & reveal
+  ai/                        Job Match, explainer, TL;DR, command palette
+  admin/                     Shell, CRUD generik, dashboard, pengaturan
+  projects/, blog/, certifications/, activities/   Section konten
+  chat-launcher.tsx          Tombol & panel SEA AI
+  contact-form.tsx           Form kontak
 lib/
-  site.ts               Data personal & About (nama, foto, skill, pengalaman)
-  projects.ts           Data proyek (dummy)
-  posts.ts              Data artikel blog (dummy)
-public/images/          Foto profil
+  ai/                        LangGraph, RAG, Job Match, prompt, mock
+  supabase/client.ts         Klien publik & admin (browser)
+  supabase/server.ts         Klien service role (server saja)
+  ai/chunking.ts             Pemecah dokumen untuk RAG
+  ai/embedding-store.ts      Cache embedding di Supabase (pgvector)
+  rate-limit.ts              Rate limit API route
+  public-api.ts              Pembacaan data publik dari Supabase
+  admin/                     Data & API panel admin
+  site.ts, projects.ts, posts.ts, certifications.ts, activities.ts   Data cadangan / default
+supabase/
+  migrations/                Skema, RLS, storage, rate limit
+  seed.sql                   Data awal
 ```
 
 ## Personalisasi

@@ -73,7 +73,8 @@ function CrudPageInner({
 }: CrudPageProps) {
   const toast = useToast();
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || searchParams.get("search") || "";
+  const urlQuery = searchParams.get("q") || searchParams.get("search");
+  const initialQuery = urlQuery || "";
   const [rows, setRows] = useState<Row[]>([]);
   const [query, setQuery] = useState(initialQuery);
   const [search, setSearch] = useState(initialQuery);
@@ -87,15 +88,20 @@ function CrudPageInner({
   const [form, setForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // Kunci permintaan terakhir yang sudah selesai; loading = permintaan saat ini belum selesai
+  const requestKey = JSON.stringify([resource, page, perPage, search, filter?.key, filterValue, reload]);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== requestKey;
 
-  useEffect(() => {
-    const urlQ = searchParams.get("q") || searchParams.get("search");
-    if (urlQ !== null && urlQ !== query) {
-      setQuery(urlQ);
-      setSearch(urlQ);
+  // Ikuti ?q= di URL (mis. dari pencarian global) tanpa effect: state disesuaikan saat render
+  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery);
+  if (urlQuery !== syncedUrlQuery) {
+    setSyncedUrlQuery(urlQuery);
+    if (urlQuery !== null) {
+      setQuery(urlQuery);
+      setSearch(urlQuery);
     }
-  }, [searchParams]);
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setSearch(query), 300);
@@ -104,7 +110,6 @@ function CrudPageInner({
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     listRows(resource, {
       page,
       perPage,
@@ -127,13 +132,13 @@ function CrudPageInner({
         }
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) setLoadedKey(requestKey);
       });
 
     return () => {
       active = false;
     };
-  }, [resource, page, perPage, search, filter?.key, filterValue, reload, toast]);
+  }, [resource, page, perPage, search, filter?.key, filterValue, reload, toast, requestKey]);
 
   const current = Math.min(page, pages);
   const visible = rows;
@@ -259,8 +264,15 @@ function CrudPageInner({
     if (col.as === "main")
       return (
         <div className="min-w-0">
-          <p className="truncate font-medium text-ad-ink">{value}</p>
-          {col.subKey && <p className="truncate text-xs text-ad-muted">{String(row[col.subKey] ?? "")}</p>}
+          {/* title = teks lengkap muncul saat kursor diarahkan ke judul yang terpotong */}
+          <p className="truncate font-medium text-ad-ink" title={String(value)}>
+            {value}
+          </p>
+          {col.subKey && (
+            <p className="truncate text-xs text-ad-muted" title={String(row[col.subKey] ?? "")}>
+              {String(row[col.subKey] ?? "")}
+            </p>
+          )}
         </div>
       );
     return <span className={value ? "" : "text-ad-muted"}>{value || "-"}</span>;
@@ -336,7 +348,7 @@ function CrudPageInner({
         <div className="space-y-4" aria-busy="true" aria-label={`Memuat data ${title.toLowerCase()}`}>
           {/* Desktop Table Skeleton */}
           <div className="ad-glass-soft hidden rounded-2xl sm:rounded-3xl md:block overflow-x-auto animate-pulse">
-            <table className="w-full min-w-[650px] text-left text-sm">
+            <table className="w-full min-w-[650px] table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-white/80 text-xs uppercase tracking-wider text-ad-muted">
                   {columns.map((c) => (
@@ -412,7 +424,7 @@ function CrudPageInner({
         <>
           {/* Tabel (tablet & desktop) */}
           <div className="ad-glass-soft hidden rounded-2xl sm:rounded-3xl md:block overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
+            <table className="w-full min-w-[650px] table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-white/80 text-xs uppercase tracking-wider text-ad-muted">
                   {columns.map((c) => (

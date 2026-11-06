@@ -8,8 +8,10 @@ import { AiBadge, ThinkingDots } from "@/components/ai/typewriter";
 export function TldrBox({ slug }: { slug: string }) {
   const [points, setPoints] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function summarize() {
+    setError(null);
     setLoading(true);
     try {
       const res = await fetch("/api/tldr", {
@@ -18,7 +20,13 @@ export function TldrBox({ slug }: { slug: string }) {
         body: JSON.stringify({ slug }),
       });
       const data = await res.json();
-      setPoints(data.points ?? ["Gagal bikin ringkasan, coba lagi ya."]);
+      if (res.ok && data.points) {
+        setPoints(data.points);
+      } else {
+        setError(data.error ?? "Gagal bikin ringkasan, coba lagi ya.");
+      }
+    } catch {
+      setError("Koneksi bermasalah, coba lagi ya.");
     } finally {
       setLoading(false);
     }
@@ -44,6 +52,8 @@ export function TldrBox({ slug }: { slug: string }) {
           </button>
         </div>
       )}
+
+      {error && !loading && !points && <p className="mt-4 text-sm text-secondary">{error}</p>}
 
       {loading && !points && (
         <div className="mt-6 space-y-3 animate-pulse" aria-busy="true" aria-label="Menyiapkan ringkasan">

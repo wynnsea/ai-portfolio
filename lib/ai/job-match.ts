@@ -4,7 +4,7 @@ import { ApiError, GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { skillProfile } from "@/lib/ai/skill-profile";
 import { buildJobMatchResult, scoreJob, type ScoreResult } from "@/lib/ai/job-match-score";
-import { invokeStructuredWithFallback } from "@/lib/ai/langchain-llm";
+import { invokeStructuredWithFallback, isThinkingLevelUnsupported } from "@/lib/ai/langchain-llm";
 import { mockJobMatch } from "@/lib/ai/mock";
 import type { JobMatchResult } from "@/lib/ai/types";
 import type { Project } from "@/lib/projects";
@@ -99,7 +99,7 @@ Aturan:
 Daftar skill:
 ${skillProfile.map((s) => `- ${s.id}: ${s.description}`).join("\n")}`;
 
-// Urutan model aktif yang dicoba (thinkingLevel: MINIMAL = 0 thought tokens).
+// Urutan model aktif yang dicoba (thinkingLevel MINIMAL = 0 thought token; LOW kalau MINIMAL ditolak).
 const MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash", "gemini-3.8-flash"];
 
 /**
@@ -114,31 +114,40 @@ export async function extractJob(jd: string): Promise<{ data: Extraction; model:
   const ai = new GoogleGenAI({ apiKey });
 
   for (const model of MODELS) {
-    try {
-      const res = await ai.models.generateContent({
-        model,
-        contents: `<lowongan>\n${jd}\n</lowongan>`,
-        config: {
-          systemInstruction,
-          httpOptions: { timeout: 25_000 },
-          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
-          responseMimeType: "application/json",
-          responseJsonSchema: extractionSchema,
-        },
-      });
-      if (!res.text) continue;
-      return { data: JSON.parse(res.text) as Extraction, model: res.modelVersion ?? model };
-    } catch (e) {
-      if (e instanceof ApiError && (e.status === 404 || e.status === 429 || e.status >= 500)) continue;
-      if (e instanceof ApiError) {
-        console.error(`[job-match] ${model} ditolak (status ${e.status}):`, e.message);
+    // Sebagian model menolak MINIMAL; untuk model itu dipakai LOW (level terendah berikutnya)
+    let thinkingLevel = ThinkingLevel.MINIMAL;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await ai.models.generateContent({
+          model,
+          contents: `<lowongan>\n${jd}\n</lowongan>`,
+          config: {
+            systemInstruction,
+            httpOptions: { timeout: 25_000 },
+            thinkingConfig: { thinkingLevel },
+            responseMimeType: "application/json",
+            responseJsonSchema: extractionSchema,
+          },
+        });
+        if (!res.text) break;
+        return { data: JSON.parse(res.text) as Extraction, model: res.modelVersion ?? model };
+      } catch (e) {
+        if (thinkingLevel === ThinkingLevel.MINIMAL && isThinkingLevelUnsupported(e)) {
+          thinkingLevel = ThinkingLevel.LOW;
+          continue;
+        }
+        if (e instanceof ApiError && (e.status === 404 || e.status === 429 || e.status >= 500)) break;
+        if (e instanceof ApiError) {
+          console.error(`[job-match] ${model} ditolak (status ${e.status}):`, e.message);
+        } else {
+          console.error(`[job-match] ${model} timeout/jaringan:`, e);
+        }
         break;
       }
-      console.error(`[job-match] ${model} timeout/jaringan:`, e);
     }
   }
 
-  // 2. Cadangan via LangChain ChatGoogleGenerativeAI Structured Output (thinkingBudget: 0)
+  // 2. Cadangan via LangChain ChatGoogleGenerativeAI Structured Output (thinking MINIMAL/LOW)
   const lcResult = await invokeStructuredWithFallback({
     schema: extractionZodSchema,
     schemaName: "JobPostingExtraction",

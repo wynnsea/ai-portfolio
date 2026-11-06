@@ -3,7 +3,7 @@ import { AdminBackground, ToastProvider } from "@/components/admin/ui";
 
 // Panel admin: tidak boleh muncul di mesin pencari
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s | Admin WYNNSEA" },
+  title: { default: "Admin", template: "%s | Admin Wynnsea" },
   robots: { index: false, follow: false },
 };
 

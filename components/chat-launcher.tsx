@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -59,9 +59,11 @@ export function ChatLauncher() {
     setOpen(false);
   }
 
+  const onEscape = useEffectEvent(() => closePanel());
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closePanel();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onEscape();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
@@ -103,10 +105,11 @@ export function ChatLauncher() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, history }),
       });
-      const data: SeaReply = await res.json();
+      const data: Partial<SeaReply> & { error?: string } = await res.json();
+      const text = res.ok && data.reply ? data.reply : data.error || "Waduh, SEA AI lagi error. Coba lagi bentar ya.";
       setMessages((m) => [
         ...m,
-        { id: nextId.current++, role: "assistant", text: data.reply, action: data.action, typed: false },
+        { id: nextId.current++, role: "assistant", text, action: res.ok ? data.action : undefined, typed: false },
       ]);
     } catch {
       setMessages((m) => [
@@ -149,12 +152,12 @@ export function ChatLauncher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={panelTransition}
-            className="flex h-[min(560px,calc(100svh-7.5rem))] w-[min(380px,calc(100vw-2.5rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(42,86,119,0.35)]"
+            className="flex h-[min(620px,calc(100svh-7.5rem))] w-[min(440px,calc(100vw-2.5rem))] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(42,86,119,0.35)]"
           >
             <div className="flex items-center justify-between bg-primary px-5 py-4 text-white">
               <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-full bg-white p-1">
-                  <Image src="/brand/logo.png" alt="" width={28} height={28} className="size-7 object-contain" />
+                <span className="grid size-10 place-items-center rounded-full bg-white p-0.5">
+                  <Image src="/brand/logo-v3.png" alt="" width={36} height={36} className="size-9 object-contain" />
                 </span>
                 <div>
                   <p className="text-sm font-medium">SEA AI</p>
@@ -171,12 +174,12 @@ export function ChatLauncher() {
             <div ref={listRef} aria-live="polite" className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
               {messages.map((m) =>
                 m.role === "user" ? (
-                  <div key={m.id} className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm leading-relaxed text-white">
+                  <div key={m.id} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap wrap-break-word rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm leading-relaxed text-white">
                     {m.text}
                   </div>
                 ) : (
-                  <div key={m.id} className="max-w-[88%] space-y-2">
-                    <div className="rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3 text-sm leading-relaxed">
+                  <div key={m.id} className="w-fit max-w-[88%] space-y-2">
+                    <div className="w-fit wrap-break-word rounded-2xl rounded-tl-sm bg-tertiary px-4 py-3 text-sm leading-relaxed">
                       {m.id === 0 ? (
                         `こんにちは! Saya SEA AI, asisten pribadinya ${settings.name}. Mau kepoin proyek, keahlian, pengalaman, atau cara ngontak bos saya? Tanya aja!`
                       ) : m.typed ? (
@@ -274,12 +277,12 @@ export function ChatLauncher() {
         {/* Logo berputar 90° saat panel terbuka dan kembali saat tertutup, selaras dengan panel */}
         <motion.span
           aria-hidden
-          className="relative block size-11"
+          className="relative block size-12"
           initial={false}
           animate={{ rotate: open ? 90 : 0 }}
           transition={panelTransition}
         >
-          <Image src="/brand/logo.png" alt="" width={44} height={44} priority className="size-11 object-contain" />
+          <Image src="/brand/logo-v3.png" alt="" width={48} height={48} priority className="size-12 object-contain" />
         </motion.span>
       </motion.button>
     </div>

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # file pribadi (sertifikat asli dengan tanggal lahir), jangan di-commit
 /private
+
+# data pesan kontak (berisi nama & email pengunjung)
+messages.csv

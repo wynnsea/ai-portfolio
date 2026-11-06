@@ -87,6 +87,10 @@ type PostRow = {
   excerpt: string;
   content: PostBlock[] | null;
   cover_url: string | null;
+  // Kolom SEO dari migration blog_agent (bisa belum ada kalau migration belum dijalankan)
+  seo_title?: string | null;
+  meta_description?: string | null;
+  keywords?: string[] | null;
 };
 
 type SettingsRow = {
@@ -164,6 +168,9 @@ const toPost = (r: PostRow): Post => ({
   excerpt: r.excerpt,
   content: r.content ?? [],
   cover: r.cover_url ?? undefined,
+  seoTitle: r.seo_title || undefined,
+  metaDescription: r.meta_description || undefined,
+  keywords: r.keywords?.length ? r.keywords : undefined,
 });
 
 const toSettings = (r: SettingsRow): SiteSettings => ({

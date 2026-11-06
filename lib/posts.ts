@@ -21,6 +21,10 @@ export type Post = {
   excerpt: string;
   content: PostBlock[];
   cover?: string;
+  /** SEO opsional; kalau kosong dipakai title & excerpt */
+  seoTitle?: string;
+  metaDescription?: string;
+  keywords?: string[];
 };
 
 /*
