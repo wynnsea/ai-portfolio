@@ -7,6 +7,7 @@ import { InlineScript } from "@/components/inline-script";
 import { buildSearchIndex } from "@/lib/ai/search-index";
 import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
 import { VisitTracker } from "@/components/visit-tracker";
+import { WaterCursor } from "@/components/water-cursor";
 
 /**
  * Semua elemen khas website portfolio: preloader, smooth scroll, navbar, SEA AI, dan pencarian.
@@ -25,6 +26,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <ChatLauncher />
             <CommandPalette items={buildSearchIndex()} />
             <VisitTracker />
+            <WaterCursor />
           </IntroProvider>
         </SmoothScroll>
       </>

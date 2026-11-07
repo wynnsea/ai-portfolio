@@ -1,4 +1,7 @@
-// Ombak dekoratif (SVG) yang bergerak pelan. Tanpa JavaScript di browser: animasinya CSS murni.
+// Ombak dekoratif (SVG) yang bergerak pelan. Animasi ombaknya CSS murni; satu-satunya JavaScript
+// adalah <WaveDolphin /> (lumba-lumba melompat acak). Matikan per ombak dengan dolphins={false}.
+import { WaveDolphin } from "@/components/wave-dolphin";
+
 // Dipakai sebagai batas antar section: bagian atas diisi warna section sebelumnya,
 // tepi bawahnya bergelombang, dan beberapa lapis ombak transparan bergerak dengan kecepatan berbeda.
 
@@ -32,9 +35,11 @@ type WaveProps = {
   /** Warna area di atas ombak (warna section sebelumnya) */
   from: keyof typeof fills;
   className?: string;
+  /** Lumba-lumba yang sesekali melompat dari ombak ini (default aktif di semua ombak) */
+  dolphins?: boolean;
 };
 
-export function Wave({ from, className = "" }: WaveProps) {
+export function Wave({ from, className = "", dolphins = true }: WaveProps) {
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-x-0 top-0 z-0 h-14 overflow-hidden md:h-24 ${className}`}>
       {layers.map((layer, i) => (
@@ -56,6 +61,7 @@ export function Wave({ from, className = "" }: WaveProps) {
       >
         <path d={front} />
       </svg>
+      {dolphins && <WaveDolphin />}
     </div>
   );
 }

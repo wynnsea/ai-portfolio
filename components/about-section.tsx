@@ -3,6 +3,7 @@ import type { SiteSettings } from "@/lib/public-api";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
 import { Wave } from "@/components/wave";
+import { TakumiBuilding } from "@/components/takumi-building";
 
 // Offset parallax berbeda untuk tiap kartu minat agar susunannya terasa hidup
 const interestOffsets = [40, -50, 70, -30];
@@ -46,11 +47,13 @@ export function AboutSection({ settings }: { settings?: SiteSettings } = {}) {
           </div>
 
           <div className="space-y-10 md:col-span-5 md:pl-6">
-            <Reveal className="bg-white p-6 shadow-[0_20px_50px_-30px_rgba(42,86,119,0.3)] md:p-8">
-              <p className="text-xs uppercase tracking-[0.25em] text-secondary">Pendidikan</p>
-              <p className="mt-4 text-2xl font-light tracking-tight">{about.education.school}</p>
-              <p className="mt-1 text-sm">{about.education.degree}</p>
-              <p className="mt-1 text-sm text-secondary">{about.education.period}</p>
+            <Reveal className="relative overflow-hidden bg-white p-6 shadow-[0_20px_50px_-30px_rgba(42,86,119,0.3)] md:p-8">
+              {/* Siluet gedung kampus samar di belakang teks */}
+              <TakumiBuilding className="pointer-events-none absolute inset-x-0 -bottom-1 h-auto w-full text-primary opacity-[0.22]" />
+              <p className="relative text-xs uppercase tracking-[0.25em] text-secondary">Pendidikan</p>
+              <p className="relative mt-4 text-2xl font-light tracking-tight">{about.education.school}</p>
+              <p className="relative mt-1 text-sm">{about.education.degree}</p>
+              <p className="relative mt-1 text-sm text-secondary">{about.education.period}</p>
             </Reveal>
 
             <Reveal delay={0.1}>

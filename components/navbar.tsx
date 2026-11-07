@@ -48,6 +48,31 @@ export function Navbar() {
   }, [isHome]);
   const current = isHome ? active : null;
 
+  // Sembunyi saat scroll ke bawah, muncul lagi saat scroll ke atas (selalu tampil di dekat puncak halaman)
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const y = window.scrollY;
+      const delta = y - last;
+      if (y < 80) setHidden(false);
+      else if (delta > 6) setHidden(true);
+      else if (delta < -6) setHidden(false);
+      if (Math.abs(delta) > 6 || y < 80) last = y;
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+  const showBar = !hidden || open;
+
   // Di halaman utama: smooth scroll ke section. Di halaman lain: navigasi biasa ke "/#section".
   const go = (hash: string) => (e: React.MouseEvent) => {
     const wasOpen = open;
@@ -85,9 +110,18 @@ export function Navbar() {
       initial={{ y: -40, opacity: 0 }}
       animate={done ? { y: 0, opacity: 1 } : undefined}
       transition={{ duration: 0.8, ease, delay: 0.5 }}
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${open ? "bg-white" : "bg-white/80 backdrop-blur-md"}`}
+      // HP & tablet: bar penuh selebar layar. Desktop (≥1024px): pil yang memakai kontainer
+      // konten utama (max-w-7xl, px-6, lg:pl-24) supaya tepinya sejajar dengan isi section.
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 lg:pt-4"
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 md:py-5 lg:pl-24">
+      <div className="lg:mx-auto lg:max-w-7xl lg:px-6 lg:pl-24">
+      <motion.nav
+        animate={{ y: showBar ? 0 : -110, opacity: showBar ? 1 : 0 }}
+        transition={{ duration: 0.45, ease }}
+        className={`pointer-events-auto flex w-full items-center justify-between gap-6 border-b border-line/80 px-6 py-3 backdrop-blur-xl transition-colors md:py-4 lg:rounded-full lg:border-0 lg:bg-white/80 lg:py-4 lg:pl-10 lg:pr-8 lg:shadow-[0_14px_40px_-18px_rgba(42,86,119,0.45)] lg:ring-1 lg:ring-line/80 ${
+          open ? "bg-white" : "bg-white/85"
+        }`}
+      >
         <div className="flex min-w-0 items-center gap-8 xl:gap-10">
           <Link
             href="/"
@@ -152,28 +186,29 @@ export function Navbar() {
             <span className={`h-px w-6 bg-primary transition-transform duration-300 ${open ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
           </button>
         </div>
-      </nav>
+      </motion.nav>
+      </div>
 
-      {/* Menu mobile & tablet: menutup seluruh layar di bawah header */}
+      {/* Menu mobile & tablet: kartu membulat di bawah pil navbar */}
       <AnimatePresence>
         {open && (
           <motion.div
             id="mobile-menu"
             data-lenis-prevent
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.35, ease }}
-            className="flex h-[calc(100svh-72px)] flex-col overflow-y-auto border-t border-line bg-white px-6 pb-8 md:h-[calc(100svh-80px)] lg:hidden"
+            className="pointer-events-auto flex h-[calc(100svh-4rem)] origin-top flex-col overflow-y-auto bg-white px-6 pb-8 md:h-[calc(100svh-4.5rem)] lg:hidden"
           >
-            <ul className="flex-1">
+            <ul className="flex-1 pt-2">
               {[...site.nav, { label: "Kontak", href: "#contact" }].map((item, i) => (
                 <motion.li
                   key={item.href}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease, delay: 0.05 + i * 0.04 }}
-                  className="border-b border-line"
+                  className="border-b border-line last:border-0"
                 >
                   <Link
                     href={`/${item.href}`}
@@ -197,7 +232,7 @@ export function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
-              className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+              className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <a href={`mailto:${settings.email}`} className="text-sm text-secondary underline-offset-4 hover:underline">
                 {settings.email}

@@ -1,7 +1,7 @@
 import type { Activity } from "@/lib/activities";
 import { Parallax } from "@/components/motion/parallax";
 import { Reveal } from "@/components/motion/reveal";
-import { ActivityCard } from "@/components/activities/activity-card";
+import { ActivityRows } from "@/components/activities/activity-rows";
 import { Wave } from "@/components/wave";
 import { EmptyState } from "@/components/empty-state";
 
@@ -29,20 +29,19 @@ export function ActivitiesSection({ activities }: { activities: Activity[] }) {
             </sup>
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            Di luar ngoding, saya ikut program industri, jadi fasilitator, dan aktif di kegiatan kampus. Klik kartunya buat lihat ceritanya.
+            Di luar ngoding, saya ikut program industri, jadi fasilitator, dan aktif di kegiatan kampus. Klik fotonya buat lihat ceritanya.
           </p>
         </Reveal>
 
-        {activities.length === 0 ? (
-          <EmptyState kanji="活" title="Belum ada kegiatan" className="mt-16 md:mt-24" />
-        ) : (
-        <div className="mt-16 grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-8 md:mt-24 lg:grid-cols-3 lg:gap-x-10 lg:gap-y-16">
-          {activities.map((activity, i) => (
-            <ActivityCard key={activity.title} activity={activity} index={i} />
-          ))}
-        </div>
-        )}
+        {activities.length === 0 && <EmptyState kanji="活" title="Belum ada kegiatan" className="mt-16 md:mt-24" />}
       </div>
+
+      {/* Baris foto selebar layar (di luar container supaya bisa keluar dari tepi) */}
+      {activities.length > 0 && (
+        <Reveal className="relative mt-16 md:mt-24">
+          <ActivityRows activities={activities} />
+        </Reveal>
+      )}
     </section>
   );
 }

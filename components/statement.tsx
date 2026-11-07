@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { Parallax } from "@/components/motion/parallax";
+import { useSiteSettings } from "@/components/providers/site-settings-provider";
 
 const text =
   "Saya tertarik dengan perkembangan teknologi AI, terutama cara mengintegrasikannya ke dalam sistem nyata. Dan ada satu hal yang selalu jadi inspirasi saya: budaya Jepang.";
@@ -16,11 +17,12 @@ function Word({ children, progress, range }: { children: string; progress: Motio
   );
 }
 
-/** Section transisi: teks menyala kata demi kata mengikuti scroll, dengan huruf "Aa" parallax di belakang. */
+/** Section transisi: teks menyala kata demi kata mengikuti scroll, dengan nama katakana (ワヤン) parallax di belakang. */
 export function Statement() {
   const ref = useRef<HTMLParagraphElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.85", "end 0.45"] });
   const words = text.split(" ");
+  const nameJp = useSiteSettings().nameJp || "ワヤン";
 
   return (
     <section id="statement" className="relative overflow-hidden bg-white py-32 md:py-48">
@@ -28,8 +30,9 @@ export function Statement() {
         offset={160}
         className="text-outline pointer-events-none absolute inset-0 flex select-none items-center justify-center"
       >
-        <span aria-hidden className="text-[55vw] font-semibold leading-none tracking-[-0.08em] md:text-[40vw]">
-          Aa
+        {/* 3 karakter katakana lebar penuh: ukuran disesuaikan supaya muat selebar layar */}
+        <span aria-hidden className="whitespace-nowrap font-jp text-[30vw] font-semibold leading-none tracking-[-0.04em] md:text-[26vw]">
+          {nameJp}
         </span>
       </Parallax>
 

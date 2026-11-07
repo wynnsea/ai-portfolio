@@ -11,7 +11,15 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const groups = [...new Set(SAMPLE_JOBS.map((j) => j.group))];
 
 /** Tombol "Pakai contoh lowongan" + popup untuk memilih salah satu contoh. */
-export function SampleJobPicker({ onPick }: { onPick: (job: SampleJob) => void }) {
+export function SampleJobPicker({
+  onPick,
+  className = "text-sm text-secondary underline-offset-4 hover:text-primary hover:underline",
+  children = "Pakai contoh lowongan",
+}: {
+  onPick: (job: SampleJob) => void;
+  className?: string;
+  children?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -65,9 +73,9 @@ export function SampleJobPicker({ onPick }: { onPick: (job: SampleJob) => void }
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="sample-job-picker"
-        className="text-sm text-secondary underline-offset-4 hover:text-primary hover:underline"
+        className={className}
       >
-        Pakai contoh lowongan
+        {children}
       </button>
 
       {typeof document !== "undefined" &&

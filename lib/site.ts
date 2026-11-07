@@ -39,6 +39,7 @@ export const site = {
     { label: "Sertifikasi", href: "#certifications" },
     { label: "Kegiatan", href: "#activities" },
     { label: "Blog", href: "#blog" },
+    { label: "Job Match", href: "#job-match" },
   ],
   socials: [
     { label: "GitHub", href: "https://github.com/wynnsea" },
