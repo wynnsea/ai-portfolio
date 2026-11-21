@@ -18,6 +18,9 @@
   --color-ad-line: #dce5f7; /* garis & border */
 
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-heading: var(--font-young-serif), ui-serif, Georgia, serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
   /* Aksen Jepang: font Mincho bawaan sistem (tanpa unduhan tambahan) */
   --font-jp: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
 
@@ -166,3 +169,31 @@ html.lenis body {
   color: transparent;
   -webkit-text-stroke: 1px var(--color-line);
 }
+
+/*
+ * Tipografi website publik ([data-site] dipasang oleh SiteChrome; panel admin tidak memakainya).
+ * Pakai body:has(...) supaya elemen yang dirender lewat portal ke <body> (mis. popup kegiatan) ikut.
+ * Sengaja di luar @layer supaya menang atas kelas utilitas lama di komponen (font-light, tracking ketat
+ * yang dirancang untuk font sans), tanpa perlu mengubah setiap komponen.
+ */
+body:has([data-site]) {
+  font-family: var(--font-serif);
+}
+body:has([data-site]) :is(h1, h2) {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+body:has([data-site]) h3 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+/* Teks Jepang & kode tetap memakai fontnya sendiri */
+body:has([data-site]) .font-jp {
+  font-family: var(--font-jp);
+}
+body:has([data-site]) :is(code, pre, kbd) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+

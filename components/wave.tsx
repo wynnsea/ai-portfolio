@@ -61,7 +61,8 @@ export function Wave({ from, className = "", dolphins = true }: WaveProps) {
       >
         <path d={front} />
       </svg>
-      {dolphins && <WaveDolphin />}
+      {/* Lumba-lumba hanya di ombak yang lautnya di bawah (section atas putih, section bawah biru) */}
+      {dolphins && from === "white" && <WaveDolphin sea="below" />}
     </div>
   );
 }

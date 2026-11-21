@@ -35,7 +35,7 @@ function Sidebar({
   return (
     <div className="ad-glass flex h-full flex-col rounded-3xl p-5">
       <Link href="/admin" onClick={onNavigate} className="flex items-center gap-3 px-2">
-        <Image src="/brand/logo-v3.png" alt="" width={44} height={44} className="size-11 object-contain" />
+        <Image src="/brand/wynnsea-v2-a-script.svg" alt="" width={44} height={44} unoptimized className="size-11 object-contain" />
         <span>
           <span className="block text-base font-semibold tracking-[0.12em] text-ad-ink">{brandName}</span>
           <span className="block text-[11px] text-ad-muted">Panel Admin</span>

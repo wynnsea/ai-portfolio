@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Instrument_Serif, Inter_Tight, Lora, Young_Serif } from "next/font/google";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -9,6 +9,28 @@ import "./globals.css";
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
   subsets: ["latin"],
+});
+
+// Font website publik (di-host sendiri oleh next/font, jadi lolos CSP & tanpa request ke Google):
+// - Instrument Serif: judul besar (h1/h2) & teks display
+// - Young Serif: judul kartu (h3)
+// - Lora: teks isi & elemen UI
+// Panel admin tetap memakai Inter Tight supaya tabel & form mudah dibaca.
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+const youngSerif = Young_Serif({
+  variable: "--font-young-serif",
+  subsets: ["latin"],
+  weight: "400",
+});
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 const seoName = "Wayan Deva Adhisthanaya";
@@ -73,7 +95,11 @@ export const metadata: Metadata = {
 // Elemen khas website (preloader, navbar, SEA AI) ada di app/(site)/layout.tsx.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${interTight.variable} antialiased`} suppressHydrationWarning>
+    <html
+      lang="id"
+      className={`${interTight.variable} ${instrumentSerif.variable} ${youngSerif.variable} ${lora.variable} antialiased`}
+      suppressHydrationWarning
+    >
       <body>{children}</body>
     </html>
   );

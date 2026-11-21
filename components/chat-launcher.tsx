@@ -4,12 +4,14 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, ExternalLink, Music2, Pause, Play, X } from "lucide-react";
 import { useLenis } from "lenis/react";
 import { useSiteSettings } from "@/components/providers/site-settings-provider";
 import type { SeaAction, SeaReply } from "@/lib/ai/types";
 import { useIntro } from "@/components/providers/intro-provider";
 import { AiBadge, ThinkingDots, Typewriter } from "@/components/ai/typewriter";
+import { site } from "@/lib/site";
+import { detectMusicIntent, pauseMusic, playMusic, toggleMusic, useMusicState } from "@/lib/music/control";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 // Dipakai bersama oleh panel chat dan putaran logo, supaya buka/tutup & putaran selalu selaras
@@ -21,6 +23,7 @@ const suggestions = [
   "Punya sertifikat apa aja?",
   "Ceritain soal Minori AI RCR",
   "Saya rekruter, cocok gak?",
+  ...(site.music.src ? ["Putar musik dong 🎵"] : []),
 ];
 
 type Message = {
@@ -28,8 +31,46 @@ type Message = {
   role: "user" | "assistant";
   text: string;
   action?: SeaAction;
+  /** Balasan perintah musik: tampilkan kartu lagu dengan tombol putar/jeda */
+  music?: boolean;
   typed?: boolean;
 };
+
+/** Kartu lagu di balasan SEA AI: putar/jeda musik latar tanpa video. */
+function MusicCard() {
+  const music = useMusicState();
+  return (
+    <div className="flex w-64 max-w-full items-center gap-3 rounded-2xl bg-white/90 p-2.5 pr-3 shadow-[0_10px_28px_-18px_rgba(42,86,119,0.5)] ring-1 ring-line/70">
+      <button
+        type="button"
+        onClick={toggleMusic}
+        aria-label={music.playing ? "Jeda musik" : "Putar musik"}
+        className="grid size-10 shrink-0 place-items-center rounded-full bg-linear-to-br from-primary to-[#1d4260] text-white shadow-[0_8px_18px_-8px_rgba(29,66,96,0.9)] transition hover:brightness-110"
+      >
+        {music.playing ? <Pause className="size-4" /> : <Play className="size-4 translate-x-px" />}
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-secondary">
+          <Music2 className={`size-3 ${music.playing ? "animate-pulse text-primary" : ""}`} />
+          {music.loading ? "Memuat…" : music.playing ? "Sedang diputar" : "Dijeda"}
+        </p>
+        {music.error && <p className="text-[11px] text-rose-600">{music.error}</p>}
+        <p className="truncate text-sm font-medium leading-tight">{site.music.title}</p>
+        <p className="truncate text-xs text-secondary">{site.music.artist}</p>
+      </div>
+      <a
+        href={site.music.appUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Buka Synseafy"
+        title="Buka Synseafy"
+        className="grid size-8 shrink-0 place-items-center rounded-full text-secondary transition-colors hover:bg-tertiary hover:text-primary"
+      >
+        <ExternalLink className="size-4" />
+      </a>
+    </div>
+  );
+}
 
 const greeting: Message = { id: 0, role: "assistant", text: "", typed: true };
 
@@ -41,6 +82,7 @@ export function ChatLauncher() {
   const [messages, setMessages] = useState<Message[]>([greeting]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const music = useMusicState();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -99,6 +141,27 @@ export function ChatLauncher() {
     const message = text.trim();
     if (!message || loading) return;
     setInput("");
+
+    // Perintah musik ("putar musik", "matiin lagu", dll.) ditangani langsung tanpa memanggil AI.
+    // play/pause dipanggil di dalam aksi pengguna ini supaya browser mengizinkan audio diputar.
+    const intent = detectMusicIntent(message);
+    if (intent) {
+      let reply: string;
+      if (!site.music.src) reply = "Waduh, musiknya belum disetel sama bos saya nih. Nanti ya!";
+      else if (intent === "play") {
+        playMusic();
+        reply = `Siap! Aku puterin "${site.music.title}" dari ${site.music.artist} ya 🎵`;
+      } else {
+        pauseMusic();
+        reply = "Oke, musiknya aku jeda dulu ya. Bilang aja kalau mau diputer lagi.";
+      }
+      setMessages((m) => [
+        ...m.map((item) => (item.typed ? item : { ...item, typed: true })),
+        { id: nextId.current++, role: "user", text: message, typed: true },
+        { id: nextId.current++, role: "assistant", text: reply, music: Boolean(site.music.src), typed: false },
+      ]);
+      return;
+    }
     const history = messages
       .filter((m) => m.id !== 0 && m.text.trim().length > 0)
       .slice(-6)
@@ -217,6 +280,7 @@ export function ChatLauncher() {
                         <Typewriter text={m.text} onDone={() => markMessageTyped(m.id)} />
                       )}
                     </div>
+                    {m.music && <MusicCard />}
                     {m.action && (
                       <button
                         type="button"
@@ -299,6 +363,38 @@ export function ChatLauncher() {
               </div> */}
             </form>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Musik sedang jalan & chat tertutup: tombol jeda kecil di atas tombol SEA AI */}
+      <AnimatePresence>
+        {music.playing && !open && (
+          <motion.button
+            type="button"
+            onClick={pauseMusic}
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.9 }}
+            aria-label={`Jeda musik ${site.music.title}`}
+            title={`${site.music.title} — ${site.music.artist}`}
+            className="liquid-glass flex items-center gap-2 rounded-full py-2 pl-2 pr-3.5 text-xs font-medium text-primary"
+          >
+            <span className="grid size-7 place-items-center rounded-full bg-primary text-white">
+              <Pause className="size-3.5" />
+            </span>
+            {/* Bar ekualizer kecil sebagai tanda musik sedang diputar */}
+            <span aria-hidden className="flex h-3 items-end gap-0.5">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className="w-0.5 rounded-full bg-primary"
+                  animate={{ height: ["30%", "100%", "45%", "80%", "30%"] }}
+                  transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
+                />
+              ))}
+            </span>
+            <span className="max-w-32 truncate">{site.music.title}</span>
+          </motion.button>
         )}
       </AnimatePresence>
 

@@ -66,11 +66,12 @@ export function LoginForm() {
         {/* Logo & Brand Header */}
         <div className="flex items-center gap-3">
           <Image
-            src="/brand/logo-v3.png"
+            src="/brand/wynnsea-v2-a-script.svg"
             alt=""
             width={44}
             height={44}
             priority
+            unoptimized
             className="size-10 sm:size-11 object-contain"
           />
           <div>

@@ -4,7 +4,10 @@ import type { AgentRunResult } from "@/lib/ai/blog-agent";
 
 /** Email ke pemilik saat agen selesai membuat draft atau gagal. */
 export async function notifyAgentResult(result: AgentRunResult) {
-  const reviewUrl = new URL("/admin/agen-blog", siteUrl).toString();
+  // Kalau admin sudah di subdomain (ADMIN_HOST), link langsung ke sana
+  const reviewUrl = process.env.ADMIN_HOST
+    ? `https://${process.env.ADMIN_HOST}/agen-blog`
+    : new URL("/admin/agen-blog", siteUrl).toString();
   if (result.status === "created") {
     await sendOwnerEmail({
       subject: `[Agen Blog] Draft baru: ${result.title}`,

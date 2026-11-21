@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useLenis } from "lenis/react";
@@ -127,9 +128,18 @@ export function Navbar() {
             href="/"
             onClick={go("#home")}
             aria-label={`${settings.brand}, ke beranda`}
-            className="shrink-0 text-base font-semibold tracking-[0.18em] md:text-lg"
+            className="shrink-0"
           >
-            {settings.brand}
+            {/* Wordmark Wynnsea (rasio 539×210) */}
+            <Image
+              src="/brand/wynnsea-sea-swash.svg"
+              alt={settings.brand}
+              width={539}
+              height={210}
+              priority
+              unoptimized
+              className="h-8 w-auto md:h-9"
+            />
           </Link>
           {/* Menu lengkap hanya di layar lebar (≥1024px) agar 5 item muat tanpa terpotong */}
           <ul className="hidden items-center gap-6 text-sm text-primary lg:flex xl:gap-8">

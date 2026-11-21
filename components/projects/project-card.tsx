@@ -23,7 +23,7 @@ export function ProjectCard({ project, index, layout }: { project: Project; inde
         >
           <div className="relative overflow-hidden shadow-[0_30px_60px_-30px_rgba(42,86,119,0.35)]">
             <div className="transition-transform duration-[1200ms] ease-expo group-hover:scale-[1.06]">
-              <ProjectCover project={project} index={index} className={layout.aspect} sizes="(min-width: 768px) 45vw, 90vw" />
+              <ProjectCover project={project} index={index} className={layout.aspect} sizes="(min-width: 768px) 45vw, 90vw" grayscale={false} />
             </div>
 
             {/* Lingkaran "View" muncul saat hover */}

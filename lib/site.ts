@@ -45,6 +45,16 @@ export const site = {
     { label: "GitHub", href: "https://github.com/wynnsea" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/wayan-deva/" },
   ],
+  // Lagu latar, dinyalakan lewat chat SEA AI ("putar musik", "matiin musik", dll).
+  // Taruh file audio (mp3/m4a/ogg) yang kamu punya haknya di public/music/, lalu isi `src`.
+  // Selama `src` kosong, fitur musik mati (SEA AI menjawab "musiknya belum disetel").
+  // Contoh: file public/music/lagu.mp3 → src: "/music/lagu.mp3"
+  music: {
+    src: "",
+    title: "Judul Lagu", // ganti
+    artist: "Nama Artis", // ganti
+    appUrl: "https://music.wynnsea.my.id", // tombol "Buka Synseafy"
+  },
   greetings: [
     "Halo",
     "Hello",

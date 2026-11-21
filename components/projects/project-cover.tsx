@@ -24,14 +24,16 @@ type ProjectCoverProps = {
   className?: string;
   sizes?: string;
   priority?: boolean;
+  /** Foto ditampilkan hitam-putih (default). false = warna asli. */
+  grayscale?: boolean;
 };
 
 /** Cover: foto jika `project.cover` diisi, jika tidak berupa artwork kanji monokrom. */
-export function ProjectCover({ project, index, variant = index, className = "", sizes = "50vw", priority }: ProjectCoverProps) {
+export function ProjectCover({ project, index, variant = index, className = "", sizes = "50vw", priority, grayscale = true }: ProjectCoverProps) {
   if (project.cover) {
     return (
       <div className={`relative overflow-hidden ${className}`}>
-        <Image src={project.cover} alt={project.title} fill sizes={sizes} priority={priority} unoptimized className="object-cover grayscale" />
+        <Image src={project.cover} alt={project.title} fill sizes={sizes} priority={priority} unoptimized className={`object-cover ${grayscale ? "grayscale" : ""}`} />
       </div>
     );
   }

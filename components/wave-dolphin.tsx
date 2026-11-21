@@ -7,39 +7,48 @@ import { DolphinMascot } from "@/components/dolphin-mascot";
 
 /**
  * Easter egg: selama ombak ini terlihat di layar, lumba-lumba melompat keluar dari laut pada
- * waktu acak, melengkung di udara, lalu menyelam lagi. Kadang 1 ekor, kadang rombongan 3 ekor
- * sekaligus, dengan posisi tersebar di sepanjang ombak (tidak monoton di satu sisi).
+ * waktu acak, melengkung di udara, lalu menyelam lagi ke laut yang sama.
  *
- * - Lompatan pertama 2–5 detik setelah ombak terlihat, berikutnya tiap 6–14 detik (acak).
- * - Berhenti saat ombak keluar layar atau tab tidak dibuka.
- * - Tidak aktif kalau pengunjung memilih "kurangi animasi".
+ * - Biasanya rombongan beruntun: satu ekor keluar, lalu sebelum ia menyelam 2–5 ekor lain sudah
+ *   ikut melompat di belakangnya (total 3–6 ekor). Sesekali hanya 1 ekor.
+ * - Lompatan pertama 0,7–1,8 detik setelah ombak terlihat, berikutnya tiap 3–7 detik (acak).
+ * - Berhenti saat ombak keluar layar atau tab tidak dibuka; mati kalau "kurangi animasi" aktif.
  *
  * Section memakai overflow-hidden, jadi lompatan dirender lewat portal ke <body> dengan posisi
  * absolut di koordinat halaman (ikut ter-scroll bersama halaman).
  */
 
-const SURFACE = 0.6; // garis air = 60% tinggi ombak (di sekitar lapisan ombak biru)
+/**
+ * Garis air (bagian lumba-lumba di bawahnya tidak terlihat), dalam persen tinggi ombak.
+ * - Laut di bawah (section bawah berwarna biru): garis di dalam lapisan biru, di bawah tepi ombak
+ *   depan yang terendah (62%), jadi lumba-lumba keluar & masuk dari air biru lalu melompat ke atas.
+ * - Laut di atas (section atas berwarna biru): garis di puncak tepi ombak (≈26%), jadi lumba-lumba
+ *   tidak pernah terlihat di section bawah yang putih.
+ */
+const SURFACE = { below: 0.8, above: 0.24 } as const;
 const SAMPLES = 19; // titik lintasan; makin banyak makin halus
-const FIRST_DELAY: [number, number] = [2000, 5000];
-const NEXT_DELAY: [number, number] = [6000, 14000];
-const POD_CHANCE = 0.45; // peluang rombongan 3 ekor (sisanya 1 ekor)
+const FIRST_DELAY: [number, number] = [700, 1800];
+const NEXT_DELAY: [number, number] = [3000, 7000];
+const SINGLE_CHANCE = 0.25; // sesekali hanya 1 ekor; sisanya rombongan beruntun 3–6 ekor
+
+export type Sea = keyof typeof SURFACE;
 
 type Jump = {
   key: number;
-  left: number; // koordinat halaman, titik keluar dari air
+  left: number; // koordinat halaman, ujung kiri lintasan
   surface: number;
   dir: 1 | -1;
   size: number;
   height: number;
   distance: number;
   duration: number; // detik
-  delay: number; // detik, untuk rombongan yang tidak persis bersamaan
+  delay: number; // detik, supaya rombongan melompat beruntun
 };
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 let nextKey = 1;
 
-export function WaveDolphin() {
+export function WaveDolphin({ sea }: { sea: Sea }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [jumps, setJumps] = useState<Jump[]>([]);
   const remove = useCallback((key: number) => setJumps((list) => list.filter((j) => j.key !== key)), []);
@@ -55,46 +64,60 @@ export function WaveDolphin() {
     const launch = () => {
       const r = el.getBoundingClientRect();
       const mobile = window.innerWidth < 768;
-      const pod = Math.random() < POD_CHANCE;
-      const count = pod ? 3 : 1;
-      const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1; // rombongan berenang searah
       const pageLeft = r.left + window.scrollX;
-      const segmentWidth = r.width / 3;
+      const surface = r.top + window.scrollY + r.height * SURFACE[sea];
+      const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1; // satu rombongan berenang searah
+      const single = Math.random() < SINGLE_CHANCE;
+      const count = single ? 1 : 3 + Math.floor(Math.random() * 4); // 1 atau 3–6 ekor
 
-      // Bagi ombak jadi 3 bagian (kiri, tengah, kanan). Rombongan: satu ekor per bagian.
-      // Satu ekor: pilih bagian yang berbeda dari lompatan sebelumnya.
-      let segments: number[];
-      if (pod) segments = [0, 1, 2];
-      else {
-        const options = [0, 1, 2].filter((s) => s !== lastSegment);
-        segments = [options[Math.floor(Math.random() * options.length)]];
-        lastSegment = segments[0];
+      // Ukuran & lintasan dasar; tiap ekor sedikit berbeda, kadang ada anak (lebih kecil)
+      const baseSize = mobile ? (single ? 70 : 52) : single ? 100 : 86;
+      const baseDistance = mobile ? (single ? 160 : 110) : single ? 260 : 220;
+      const baseHeight = mobile ? (single ? 110 : 90) : single ? 145 : 130;
+      const babies = single ? new Set<number>() : new Set([Math.floor(Math.random() * count)]);
+
+      const specs = Array.from({ length: count }, (_, i) => {
+        const baby = babies.has(i);
+        const scale = baby ? 0.68 : rand(0.88, 1.06);
+        return {
+          size: baseSize * scale,
+          distance: baseDistance * (baby ? 0.8 : rand(0.92, 1.08)),
+          height: baseHeight * (baby ? 0.75 : rand(0.9, 1.1)),
+          duration: rand(1.7, 2.05),
+        };
+      });
+      const maxSpan = Math.max(...specs.map((sp) => sp.distance + sp.size));
+
+      // Posisi: satu ekor → bagian ombak berbeda dari sebelumnya; rombongan → berbaris searah
+      let lefts: number[];
+      if (single) {
+        const segmentWidth = r.width / 3;
+        const options = [0, 1, 2].filter((sg) => sg !== lastSegment);
+        const segment = options[Math.floor(Math.random() * options.length)];
+        lastSegment = segment;
+        lefts = [pageLeft + segment * segmentWidth + rand(0, Math.max(0, segmentWidth - maxSpan * 0.6))];
+      } else {
+        // Jarak antar-ekor lebih pendek dari lintasan, jadi yang belakang sudah melompat sebelum yang depan menyelam
+        let step = baseDistance * rand(0.4, 0.6);
+        const room = r.width - 24 - maxSpan;
+        if (step * (count - 1) > room) step = Math.max(24, room / (count - 1));
+        const extent = step * (count - 1) + maxSpan;
+        const start = pageLeft + 12 + rand(0, Math.max(0, r.width - 24 - extent));
+        lefts = specs.map((_, i) => start + i * step);
       }
-      // Urutan muncul rombongan diacak, dengan jeda kecil supaya terasa alami
-      const order = [...segments].sort(() => Math.random() - 0.5);
-      const babyIndex = pod ? Math.floor(Math.random() * count) : -1;
 
-      const created: Jump[] = segments.map((segment, i) => {
-        const baby = i === babyIndex;
-        const scale = baby ? 0.68 : rand(0.9, 1.08);
-        const size = (mobile ? (pod ? 54 : 70) : 100) * scale;
-        const distance = (mobile ? (pod ? 100 : 160) : rand(230, 290)) * (baby ? 0.8 : 1);
-        const height = (mobile ? (pod ? 90 : 110) : rand(125, 160)) * (baby ? 0.75 : 1);
-        const span = distance + size;
-        // Titik keluar acak di dalam bagiannya, dijaga tetap di dalam ombak
-        const segStart = pageLeft + segment * segmentWidth;
-        const raw = segStart + rand(0, Math.max(0, segmentWidth - span * 0.6));
-        const left = Math.min(Math.max(raw, pageLeft + 12), pageLeft + r.width - span - 12);
+      // Yang paling depan (searah renang) melompat duluan, sisanya menyusul beruntun
+      const gap = rand(0.28, 0.42);
+      const created: Jump[] = specs.map((sp, i) => {
+        const order = dir === 1 ? count - 1 - i : i;
+        const left = Math.min(Math.max(lefts[i], pageLeft + 8), pageLeft + r.width - sp.distance - sp.size - 8);
         return {
           key: nextKey++,
           left,
-          surface: r.top + window.scrollY + r.height * SURFACE,
+          surface,
           dir,
-          size,
-          height,
-          distance,
-          duration: rand(1.7, 2.1),
-          delay: pod ? order.indexOf(segment) * rand(0.12, 0.3) : 0,
+          ...sp,
+          delay: single ? 0 : order * gap + rand(0, 0.08),
         };
       });
       setJumps((list) => [...list, ...created]);
@@ -129,7 +152,7 @@ export function WaveDolphin() {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [sea]);
 
   return (
     <>

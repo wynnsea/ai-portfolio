@@ -46,6 +46,8 @@ const nextConfig: NextConfig = {
   },
   // Sembunyikan logo/indikator Next.js di pojok kiri bawah saat development
   devIndicators: false,
+  // Panel admin di subdomain: saat development dibuka lewat http://admin.localhost:3000
+  allowedDevOrigins: ["admin.localhost"],
   experimental: {
     agentFeedback: true,
   },

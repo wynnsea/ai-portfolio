@@ -40,7 +40,7 @@ export function Statement() {
         <p className="mb-8 text-xs uppercase tracking-[0.25em] text-secondary">01 / Perkenalan</p>
         <p
           ref={ref}
-          className="max-w-5xl text-[clamp(2rem,5.5vw,4.5rem)] font-light leading-[1.08] tracking-[-0.04em]"
+          className="max-w-5xl font-display text-[clamp(2.2rem,6vw,5rem)] leading-[1.08] tracking-[-0.01em]"
         >
           {words.map((w, i) => (
             <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>

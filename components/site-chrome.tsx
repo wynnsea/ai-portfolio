@@ -8,6 +8,7 @@ import { buildSearchIndex } from "@/lib/ai/search-index";
 import { SiteSettingsProvider } from "@/components/providers/site-settings-provider";
 import { VisitTracker } from "@/components/visit-tracker";
 import { WaterCursor } from "@/components/water-cursor";
+import { MusicEngine } from "@/components/music/music-engine";
 
 /**
  * Semua elemen khas website portfolio: preloader, smooth scroll, navbar, SEA AI, dan pencarian.
@@ -16,7 +17,8 @@ import { WaterCursor } from "@/components/water-cursor";
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   return (
     <SiteSettingsProvider>
-      <>
+      {/* data-site: penanda tipografi website publik (lihat globals.css); `contents` = tanpa kotak layout */}
+      <div data-site className="contents">
         {/* Set status intro di <html> sebelum preloader dirender (kunci scroll / lewati preloader) */}
         <InlineScript html={introScript} />
         <SmoothScroll>
@@ -27,9 +29,10 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             <CommandPalette items={buildSearchIndex()} />
             <VisitTracker />
             <WaterCursor />
+            <MusicEngine />
           </IntroProvider>
         </SmoothScroll>
-      </>
+      </div>
     </SiteSettingsProvider>
   );
 }
