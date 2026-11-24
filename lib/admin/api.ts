@@ -157,6 +157,7 @@ function toRow(record: Record<string, unknown>): Row {
   if (typeof row.orderCode === "string") {
     row.templateTitle ||= row.isCustom ? "Desain custom" : "Template dihapus";
     if (typeof row.amount === "number") row.amountLabel = row.amount === 0 ? "Gratis" : `Rp${row.amount.toLocaleString("id-ID")}`;
+    row.statusLabel = row.amount === 0 ? "FREE" : row.status;
   }
   if (row.links && typeof row.links === "object") {
     const links = row.links as Record<string, unknown>;

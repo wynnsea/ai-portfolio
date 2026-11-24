@@ -68,7 +68,7 @@ export function ShopPesananTable() {
         { key: "buyerEmail", label: "Pembeli" },
         { key: "amountLabel", label: "Nominal", className: "w-32" },
         { key: "date", label: "Tanggal", className: "w-32" },
-        { key: "status", label: "Status", as: "badge", className: "w-28" },
+        { key: "statusLabel", label: "Status", as: "badge", className: "w-28" },
       ]}
       fields={[
         { name: "orderCode", label: "Kode pesanan" },
