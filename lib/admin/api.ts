@@ -67,6 +67,8 @@ type ResourceConfig = {
   nullable?: string[];
   /** Butuh slug untuk URL publik. */
   slug?: boolean;
+  /** Kolom yang diambil (default "*"), mis. untuk ikut membaca data tabel relasi. */
+  select?: string;
 };
 
 const resources: Record<Resource, ResourceConfig> = {
@@ -102,6 +104,31 @@ const resources: Record<Resource, ResourceConfig> = {
     search: ["name", "email", "subject"],
     fields: ["status"],
   },
+  // --- Wynnsea Shop (shop.wynnsea.my.id), database yang sama ---
+  "shop-template": {
+    table: "shop_templates",
+    search: ["title", "category", "summary"],
+    fields: [
+      "title", "category", "status", "price", "techStack", "demoUrl", "thumbnailUrl", "screenshots", "mobileScreenshots",
+      "summary", "description", "features", "version", "fileSize", "storageFilePath",
+    ],
+    nullable: ["demoUrl", "thumbnailUrl", "fileSize", "storageFilePath"],
+    slug: true,
+  },
+  "shop-pesanan": {
+    table: "shop_orders",
+    search: ["order_code", "buyer_email"],
+    fields: ["status"],
+    select: "*, shop_templates(title)",
+  },
+};
+
+/** Kolom array → teks di form admin, dengan pemisahnya */
+const ARRAY_FIELDS: Record<string, ", " | "\n"> = {
+  techStack: ", ",
+  features: "\n",
+  screenshots: "\n",
+  mobileScreenshots: "\n",
 };
 
 const toSnake = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
@@ -119,6 +146,18 @@ function toRow(record: Record<string, unknown>): Row {
       .join("\n");
   }
   if (Array.isArray(row.photos)) row.photos = row.photos.join("\n");
+  for (const [key, separator] of Object.entries(ARRAY_FIELDS)) {
+    if (Array.isArray(row[key])) row[key] = (row[key] as string[]).join(separator);
+  }
+  // Pesanan shop: judul template dari relasi, nominal dalam Rupiah
+  if (row.shopTemplates && typeof row.shopTemplates === "object") {
+    row.templateTitle = (row.shopTemplates as { title?: string }).title ?? "";
+    delete row.shopTemplates;
+  }
+  if (typeof row.orderCode === "string") {
+    row.templateTitle ||= row.isCustom ? "Desain custom" : "Template dihapus";
+    if (typeof row.amount === "number") row.amountLabel = row.amount === 0 ? "Gratis" : `Rp${row.amount.toLocaleString("id-ID")}`;
+  }
   if (row.links && typeof row.links === "object") {
     const links = row.links as Record<string, unknown>;
     row.demoUrl = typeof links.demo === "string" ? links.demo : "";
@@ -153,6 +192,11 @@ function toRecord(config: ResourceConfig, payload: Record<string, unknown>): Rec
         });
     } else if (field === "photos" && typeof value === "string") {
       value = value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+    } else if (field in ARRAY_FIELDS && typeof value === "string") {
+      value = value.split(ARRAY_FIELDS[field] === ", " ? "," : /\r?\n/).map((item) => item.trim()).filter(Boolean);
+    } else if (field === "price") {
+      const price = Number(String(value ?? "").replace(/[^\d]/g, ""));
+      value = Number.isFinite(price) ? price : 0;
     } else if (field === "content" && typeof value === "string") {
       record.read_time = readTimeOf(value);
       value = textToBlocks(value);
@@ -162,7 +206,7 @@ function toRecord(config: ResourceConfig, payload: Record<string, unknown>): Rec
       value = null;
     }
 
-    if (field === "demoUrl" || field === "sourceUrl") {
+    if ((field === "demoUrl" || field === "sourceUrl") && config.table === "projects") {
       const links = (record.links as Record<string, string> | undefined) ?? {};
       if (typeof value === "string" && value) links[field === "demoUrl" ? "demo" : "source"] = value;
       record.links = links;
@@ -213,7 +257,7 @@ export async function listRows(resource: Resource, params: ListParams): Promise<
 
   let query = db()
     .from(config.table)
-    .select("*", { count: "exact" })
+    .select(config.select ?? "*", { count: "exact" })
     .order("id", { ascending: false })
     .range(from, from + params.perPage - 1);
 
@@ -226,7 +270,7 @@ export async function listRows(resource: Resource, params: ListParams): Promise<
   }
 
   const result = await query;
-  const data = check(result) as Record<string, unknown>[];
+  const data = check(result) as unknown as Record<string, unknown>[];
   const total = result.count ?? data.length;
 
   return {
@@ -238,8 +282,8 @@ export async function listRows(resource: Resource, params: ListParams): Promise<
 }
 
 export async function getRow(resource: Resource, id: number): Promise<Row> {
-  const { table } = resources[resource];
-  let record = check(await db().from(table).select("*").eq("id", id).single()) as Record<string, unknown>;
+  const { table, select } = resources[resource];
+  let record = check(await db().from(table).select(select ?? "*").eq("id", id).single()) as unknown as Record<string, unknown>;
 
   // Pesan otomatis ditandai sebagai 'Dibaca' saat dibuka / di-view
   if (resource === "pesan" && record.status === "Baru") {
@@ -260,7 +304,7 @@ export async function saveRow(resource: Resource, payload: Record<string, unknow
     saved = check(await db().from(config.table).insert(record).select().single()) as Record<string, unknown>;
   } else {
     // Slug tidak diubah saat edit supaya link yang sudah dibagikan tetap jalan
-    saved = check(await db().from(config.table).update(record).eq("id", id).select().single()) as Record<string, unknown>;
+    saved = check(await db().from(config.table).update(record).eq("id", id).select(config.select ?? "*").single()) as unknown as Record<string, unknown>;
   }
 
   if (resource === "pesan") notifyDashboardRefresh();
@@ -477,6 +521,15 @@ export async function uploadFile(file: File, folder: string): Promise<{ url: str
   if (error) throw new ApiError(`Gagal mengunggah file: ${error.message}`, 400);
 
   return { url: storage.getPublicUrl(path).data.publicUrl, path };
+}
+
+/** Upload ke bucket private (mis. file zip template shop). Yang disimpan path-nya, bukan URL publik. */
+export async function uploadPrivateFile(file: File, bucket: string, folder: string): Promise<{ path: string }> {
+  const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+  const path = `${folder}/${Date.now()}-${safeName}`;
+  const { error } = await db().storage.from(bucket).upload(path, file, { contentType: file.type || "application/zip", upsert: false });
+  if (error) throw new ApiError(`Gagal mengunggah file: ${error.message}`, 400);
+  return { path };
 }
 
 // ---------------------------------------------------------------------------

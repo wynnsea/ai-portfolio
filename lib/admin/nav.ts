@@ -8,7 +8,9 @@ import {
   LifeBuoy,
   LogOut,
   Mail,
+  Receipt,
   Settings,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 export type NavItem = { label: string; href: string; icon: LucideIcon; badge?: number };
@@ -24,6 +26,13 @@ export const adminNav: { title: string; items: NavItem[] }[] = [
       { label: "Artikel", href: "/admin/artikel", icon: FileText },
       { label: "Agen Blog", href: "/admin/agen-blog", icon: Bot },
       { label: "Pesan", href: "/admin/pesan", icon: Mail },
+    ],
+  },
+  {
+    title: "Shop",
+    items: [
+      { label: "Template", href: "/admin/shop/template", icon: Store },
+      { label: "Pesanan", href: "/admin/shop/pesanan", icon: Receipt },
     ],
   },
   {

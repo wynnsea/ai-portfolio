@@ -4,6 +4,86 @@
 // halaman (server component) hanya boleh mengirim props yang bisa diserialisasi.
 import { CrudPage } from "@/components/admin/crud-page";
 
+// Gambar template yang disimpan sebagai path shop (mis. /templates/a.jpg) dipratinjau dari domain shop
+const SHOP_URL = process.env.NEXT_PUBLIC_SHOP_URL || "https://shop.wynnsea.my.id";
+
+export function ShopTemplateTable() {
+  return (
+    <CrudPage
+      resource="shop-template"
+      title="Template Shop"
+      description="Katalog template di shop.wynnsea.my.id. Perubahan tampil di shop dalam beberapa menit."
+      singular="Template"
+      searchKeys={["title", "category", "summary"]}
+      filter={{ key: "status", label: "Filter status", options: ["Terbit", "Draft", "Arsip"] }}
+      columns={[
+        { key: "title", label: "Template", as: "main", subKey: "category", className: "w-[40%]" },
+        { key: "price", label: "Harga (Rp)", className: "w-32" },
+        { key: "downloadsCount", label: "Terjual", className: "w-24" },
+        { key: "status", label: "Status", as: "badge", className: "w-28" },
+      ]}
+      fields={[
+        { name: "title", label: "Nama template", required: true, placeholder: "mis. Harbor Sales Dashboard", hint: "Tanpa awalan Wynnsea dan tanpa tanda —", full: true },
+        { name: "category", label: "Kategori", type: "select", options: ["Landing Page", "Dashboard", "SaaS", "Portfolio", "E-Commerce"] },
+        { name: "status", label: "Status", type: "select", options: ["Draft", "Terbit", "Arsip"], hint: "Hanya status Terbit yang tampil di shop." },
+        { name: "price", label: "Harga (Rupiah)", type: "number", placeholder: "0 untuk gratis", hint: "Isi 0 untuk template gratis." },
+        { name: "techStack", label: "Tech stack", placeholder: "HTML, Tailwind", hint: "Pilihan: Next.js, Laravel, Tailwind, HTML. Pisahkan dengan koma." },
+        { name: "demoUrl", label: "Link demo", type: "url", placeholder: "https://nama.demo.wynnsea.my.id", hint: "Kosongkan kalau belum ada demo.", full: true },
+        { name: "summary", label: "Ringkasan", required: true, placeholder: "Satu kalimat yang tampil di kartu katalog", full: true },
+        { name: "description", label: "Deskripsi", type: "textarea", required: true, full: true },
+        { name: "features", label: "Fitur", type: "textarea", hint: "Satu fitur per baris.", full: true },
+        { name: "thumbnailUrl", label: "Gambar kartu (4:3)", type: "image", previewBase: SHOP_URL, hint: "Tampil di kartu katalog. Kosongkan untuk memakai screenshot desktop pertama.", full: true },
+        { name: "screenshots", label: "Screenshot desktop", type: "images", previewBase: SHOP_URL, hint: "Galeri di halaman detail, urut dari atas.", full: true },
+        { name: "mobileScreenshots", label: "Screenshot HP", type: "images", previewBase: SHOP_URL, full: true },
+        { name: "version", label: "Versi", placeholder: "v1.0.0" },
+        { name: "fileSize", label: "Ukuran file", placeholder: "mis. 1.2 MB" },
+        {
+          name: "storageFilePath",
+          label: "File zip template",
+          type: "file",
+          bucket: "shop-source-files",
+          accept: ".zip,application/zip",
+          hint: "Upload zip tanpa node_modules, .next, .git, dan .env. Hanya pembeli yang sudah lunas yang bisa mengunduhnya.",
+          full: true,
+        },
+      ]}
+    />
+  );
+}
+
+export function ShopPesananTable() {
+  return (
+    <CrudPage
+      resource="shop-pesanan"
+      title="Pesanan Shop"
+      description="Pesanan template dan desain custom dari shop.wynnsea.my.id."
+      singular="Pesanan"
+      allowCreate={false}
+      titleKey="orderCode"
+      editableFields={["status"]}
+      searchKeys={["orderCode", "buyerEmail"]}
+      filter={{ key: "status", label: "Filter status", options: ["PENDING", "PAID", "EXPIRED"] }}
+      columns={[
+        { key: "orderCode", label: "Pesanan", as: "main", subKey: "templateTitle", className: "w-[34%]" },
+        { key: "buyerEmail", label: "Pembeli" },
+        { key: "amountLabel", label: "Nominal", className: "w-32" },
+        { key: "date", label: "Tanggal", className: "w-32" },
+        { key: "status", label: "Status", as: "badge", className: "w-28" },
+      ]}
+      fields={[
+        { name: "orderCode", label: "Kode pesanan" },
+        { name: "templateTitle", label: "Template" },
+        { name: "buyerEmail", label: "Email pembeli", type: "email" },
+        { name: "amountLabel", label: "Nominal" },
+        { name: "paymentMethod", label: "Metode bayar" },
+        { name: "date", label: "Tanggal", type: "date" },
+        { name: "status", label: "Status", type: "select", options: ["PENDING", "PAID", "EXPIRED"], hint: "PAID = lunas, pembeli bisa mengunduh file." },
+        { name: "customSummary", label: "Catatan custom", type: "textarea", full: true },
+      ]}
+    />
+  );
+}
+
 export function ProyekTable() {
   return (
     <CrudPage

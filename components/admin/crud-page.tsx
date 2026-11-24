@@ -5,14 +5,20 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Inbox, Loader2, Mail, Pencil, Plus, Search, Send, Trash2, Upload } from "lucide-react";
 import type { Resource, Row } from "@/lib/admin/data";
-import { ApiError, deleteRow, getRow, listRows, saveRow, uploadFile } from "@/lib/admin/api";
+import { ApiError, deleteRow, getRow, listRows, saveRow, uploadFile, uploadPrivateFile } from "@/lib/admin/api";
 import { Badge, Button, Field, Input, Modal, PageHeader, Select, Textarea, useToast } from "@/components/admin/ui";
 
 export type FieldDef = {
   name: string;
   label: string;
-  type?: "text" | "textarea" | "select" | "number" | "url" | "date" | "email" | "image" | "images";
+  type?: "text" | "textarea" | "select" | "number" | "url" | "date" | "email" | "image" | "images" | "file";
   options?: string[];
+  /** type "file": bucket private tujuan upload; yang disimpan adalah path file */
+  bucket?: string;
+  /** type "file": jenis file yang boleh dipilih, mis. ".zip" */
+  accept?: string;
+  /** type "image(s)": awalan untuk path relatif, mis. gambar milik app lain ("/templates/a.jpg") */
+  previewBase?: string;
   required?: boolean;
   placeholder?: string;
   hint?: string;
@@ -41,7 +47,14 @@ type CrudPageProps = {
   allowCreate?: boolean;
   allowEdit?: boolean;
   titleKey?: string;
+  /** Hanya field ini yang muncul di form edit (default: semua field). Detail tetap menampilkan semuanya. */
+  editableFields?: string[];
 };
+
+/** Path relatif (mis. "/templates/a.jpg") ditampilkan dari app pemiliknya */
+function previewSrc(url: string, base?: string): string {
+  return base && url.startsWith("/") ? `${base.replace(/\/+$/, "")}${url}` : url;
+}
 
 function getPaginationRange(current: number, totalPages: number): (number | "...")[] {
   if (totalPages <= 7) {
@@ -70,7 +83,9 @@ function CrudPageInner({
   allowCreate = true,
   allowEdit = true,
   titleKey = "title",
+  editableFields,
 }: CrudPageProps) {
+  const formFields = editableFields ? fields.filter((f) => editableFields.includes(f.name)) : fields;
   const toast = useToast();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || searchParams.get("search");
@@ -150,7 +165,7 @@ function CrudPageInner({
 
   const openForm = (row?: Row) => {
     const values: Record<string, string> = {};
-    for (const f of fields) values[f.name] = row ? String(row[f.name] ?? "") : f.type === "select" && f.options ? f.options[0] : "";
+    for (const f of formFields) values[f.name] = row ? String(row[f.name] ?? "") : f.type === "select" && f.options ? f.options[0] : "";
     setForm(values);
     setErrors({});
     setMode(row ? { type: "edit", row } : { type: "create" });
@@ -182,10 +197,30 @@ function CrudPageInner({
     }
   };
 
+  const uploadPrivate = async (field: FieldDef, files: FileList | null) => {
+    const file = files?.[0];
+    if (!file || !field.bucket) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast("Ukuran file maksimal 50 MB.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const folder = (form.title || "file").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "file";
+      const { path } = await uploadPrivateFile(file, field.bucket, folder);
+      setForm((currentForm) => ({ ...currentForm, [field.name]: path }));
+      toast("File berhasil diunggah.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Gagal mengunggah file.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: Record<string, string> = {};
-    for (const f of fields) if (f.required && !form[f.name]?.trim()) next[f.name] = `${f.label} wajib diisi`;
+    for (const f of formFields) if (f.required && !form[f.name]?.trim()) next[f.name] = `${f.label} wajib diisi`;
     setErrors(next);
     if (Object.keys(next).length) return;
 
@@ -194,7 +229,7 @@ function CrudPageInner({
     const payload =
       resource === "pesan"
         ? { status: form.status }
-        : Object.fromEntries(fields.map((field) => [field.name, form[field.name] ?? ""]));
+        : Object.fromEntries(formFields.map((field) => [field.name, form[field.name] ?? ""]));
     try {
       await saveRow(resource, payload, isEdit ? mode.row.id : undefined);
       setBusy(false);
@@ -645,10 +680,32 @@ function CrudPageInner({
         }
       >
         <form id="crud-form" onSubmit={submit} noValidate className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {fields.map((f) => (
+          {formFields.map((f) => (
             <div key={f.name} className={f.full || f.type === "textarea" ? "sm:col-span-2" : ""}>
               <Field label={`${f.label}${f.required ? " *" : ""}`} hint={f.hint} error={errors[f.name]}>
-                {f.type === "image" || f.type === "images" ? (
+                {f.type === "file" ? (
+                  <div className="space-y-3">
+                    <Input
+                      value={form[f.name] ?? ""}
+                      placeholder={f.placeholder ?? "Belum ada file"}
+                      onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                    />
+                    <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
+                      <Upload className="size-4" />
+                      Upload file
+                      <input
+                        type="file"
+                        accept={f.accept}
+                        disabled={busy}
+                        className="sr-only"
+                        onChange={(event) => {
+                          void uploadPrivate(f, event.currentTarget.files);
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : f.type === "image" || f.type === "images" ? (
                   <div className="space-y-3">
                     {f.type === "image" ? (
                       <Input
@@ -685,7 +742,7 @@ function CrudPageInner({
                     {!!form[f.name]?.trim() && (
                       <div className="flex flex-wrap gap-2">
                         {form[f.name].split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => (
-                          <Image key={url} src={url} alt="Pratinjau gambar" width={112} height={72} unoptimized className="h-[72px] w-28 rounded-xl object-cover ring-1 ring-ad-line" />
+                          <Image key={url} src={previewSrc(url, f.previewBase)} alt="Pratinjau gambar" width={112} height={72} unoptimized className="h-[72px] w-28 rounded-xl object-cover ring-1 ring-ad-line" />
                         ))}
                       </div>
                     )}
@@ -834,8 +891,8 @@ function CrudPageInner({
                       ) : f.type === "image" || f.type === "images" ? (
                         <div className="flex flex-wrap gap-2">
                           {value.split(/\r?\n/).map((url) => url.trim()).filter(Boolean).map((url) => (
-                            <a key={url} href={url} target="_blank" rel="noopener noreferrer" aria-label="Buka gambar di tab baru">
-                              <Image src={url} alt="" width={144} height={96} unoptimized className="h-24 w-36 rounded-xl object-cover ring-1 ring-ad-line" />
+                            <a key={url} href={previewSrc(url, f.previewBase)} target="_blank" rel="noopener noreferrer" aria-label="Buka gambar di tab baru">
+                              <Image src={previewSrc(url, f.previewBase)} alt="" width={144} height={96} unoptimized className="h-24 w-36 rounded-xl object-cover ring-1 ring-ad-line" />
                             </a>
                           ))}
                         </div>
