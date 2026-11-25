@@ -7,6 +7,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "");
 const isDev = process.env.NODE_ENV !== "production";
 const supabaseWs = supabaseUrl?.replace(/^http/, "ws") ?? "";
 const turnstile = "https://challenges.cloudflare.com";
+// Admin → Shop shows template screenshots that live on the shop domain (e.g. /templates/a.webp)
+const shopUrl = (process.env.NEXT_PUBLIC_SHOP_URL || "https://shop.wynnsea.my.id").replace(/\/+$/, "");
 
 // CSP tanpa nonce: nonce butuh render dinamis dan tidak cocok dengan Partial Prerendering
 // (lihat node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md),
@@ -15,7 +17,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${turnstile}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' blob: data: ${supabaseUrl ?? ""}`,
+  `img-src 'self' blob: data: ${supabaseUrl ?? ""} ${shopUrl}`,
   "font-src 'self' data:",
   `connect-src 'self' ${supabaseUrl ?? ""} ${supabaseWs} ${turnstile}${isDev ? " ws: http://localhost:*" : ""}`,
   `frame-src ${turnstile}`,

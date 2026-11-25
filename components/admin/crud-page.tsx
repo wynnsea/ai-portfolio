@@ -51,6 +51,8 @@ type CrudPageProps = {
   editableFields?: string[];
 };
 
+type UploadStatus = { state: "uploading" | "done" | "error"; message: string };
+
 /** Path relatif (mis. "/templates/a.jpg") ditampilkan dari app pemiliknya */
 function previewSrc(url: string, base?: string): string {
   return base && url.startsWith("/") ? `${base.replace(/\/+$/, "")}${url}` : url;
@@ -163,7 +165,10 @@ function CrudPageInner({
     setErrors({});
   };
 
+  const [uploadStatus, setUploadStatus] = useState<Record<string, UploadStatus>>({});
+
   const openForm = (row?: Row) => {
+    setUploadStatus({});
     const values: Record<string, string> = {};
     for (const f of formFields) values[f.name] = row ? String(row[f.name] ?? "") : f.type === "select" && f.options ? f.options[0] : "";
     setForm(values);
@@ -200,18 +205,22 @@ function CrudPageInner({
   const uploadPrivate = async (field: FieldDef, files: FileList | null) => {
     const file = files?.[0];
     if (!file || !field.bucket) return;
+    const setStatus = (status: UploadStatus) => setUploadStatus((current) => ({ ...current, [field.name]: status }));
     if (file.size > 50 * 1024 * 1024) {
-      toast("Ukuran file maksimal 50 MB.");
+      setStatus({ state: "error", message: "Ukuran file maksimal 50 MB." });
       return;
     }
     setBusy(true);
+    setStatus({ state: "uploading", message: `Mengunggah ${file.name}…` });
     try {
       const folder = (form.title || "file").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "file";
       const { path } = await uploadPrivateFile(file, field.bucket, folder);
       setForm((currentForm) => ({ ...currentForm, [field.name]: path }));
-      toast("File berhasil diunggah.");
+      setStatus({ state: "done", message: `${file.name} terunggah. Klik Simpan supaya file ini tersimpan di template.` });
     } catch (error) {
-      toast(error instanceof Error ? error.message : "Gagal mengunggah file.");
+      const message = error instanceof Error ? error.message : "Gagal mengunggah file.";
+      setStatus({ state: "error", message });
+      toast(message);
     } finally {
       setBusy(false);
     }
@@ -690,7 +699,7 @@ function CrudPageInner({
                       placeholder={f.placeholder ?? "Belum ada file"}
                       onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                     />
-                    <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
+                    <label className="relative inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
                       <Upload className="size-4" />
                       Upload file
                       <input
@@ -704,6 +713,21 @@ function CrudPageInner({
                         }}
                       />
                     </label>
+                    {uploadStatus[f.name] && (
+                      <p
+                        role={uploadStatus[f.name].state === "error" ? "alert" : "status"}
+                        className={`flex items-start gap-1.5 rounded-xl px-3 py-2 text-xs ${
+                          uploadStatus[f.name].state === "error"
+                            ? "bg-rose-50 text-rose-700"
+                            : uploadStatus[f.name].state === "done"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-ad-soft text-ad-deep"
+                        }`}
+                      >
+                        {uploadStatus[f.name].state === "uploading" && <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin" />}
+                        {uploadStatus[f.name].message}
+                      </p>
+                    )}
                   </div>
                 ) : f.type === "image" || f.type === "images" ? (
                   <div className="space-y-3">
@@ -722,7 +746,7 @@ function CrudPageInner({
                       />
                     )}
                     <div className="flex flex-wrap items-center gap-3">
-                      <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
+                      <label className="relative inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-ad-line bg-white/70 px-4 text-xs font-medium text-ad-deep transition hover:bg-white">
                         <Upload className="size-4" />
                         Upload gambar
                         <input

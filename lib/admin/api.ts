@@ -528,8 +528,26 @@ export async function uploadFile(file: File, folder: string): Promise<{ url: str
 export async function uploadPrivateFile(file: File, bucket: string, folder: string): Promise<{ path: string }> {
   const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
   const path = `${folder}/${Date.now()}-${safeName}`;
-  const { error } = await db().storage.from(bucket).upload(path, file, { contentType: file.type || "application/zip", upsert: false });
-  if (error) throw new ApiError(`Gagal mengunggah file: ${error.message}`, 400);
+  // Browsers report .zip with different MIME types (application/x-zip, application/x-zip-compressed, empty...).
+  // Send zip files with one consistent type so the bucket's allowed-type check always passes.
+  const body = safeName.endsWith(".zip") ? new Blob([file], { type: "application/zip" }) : file;
+  const { error } = await db().storage.from(bucket).upload(path, body, { contentType: body.type || "application/octet-stream", upsert: false });
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("bucket not found")) {
+      throw new ApiError(`Bucket "${bucket}" belum ada di Supabase. Jalankan migration shop terlebih dahulu.`, 400);
+    }
+    if (message.includes("row-level security") || message.includes("unauthorized") || message.includes("403")) {
+      throw new ApiError("Upload ditolak: akun ini tidak punya akses admin ke penyimpanan file template.", 403);
+    }
+    if (message.includes("mime") || message.includes("not supported")) {
+      throw new ApiError("Jenis file tidak diizinkan. Upload file .zip.", 400);
+    }
+    if (message.includes("exceeded") || message.includes("too large") || message.includes("size")) {
+      throw new ApiError("Ukuran file melebihi batas 50 MB.", 400);
+    }
+    throw new ApiError(`Gagal mengunggah file: ${error.message}`, 400);
+  }
   return { path };
 }
 
